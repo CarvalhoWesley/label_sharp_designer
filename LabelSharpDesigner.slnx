@@ -13,6 +13,7 @@
     <Project Path="src/LabelSharpDesigner.Rendering.Canvas/LabelSharpDesigner.Rendering.Canvas.csproj" />
     <Project Path="src/LabelSharpDesigner.Rendering.Pdf/LabelSharpDesigner.Rendering.Pdf.csproj" />
     <Project Path="src/LabelSharpDesigner.Rendering.Png/LabelSharpDesigner.Rendering.Png.csproj" />
+    <Project Path="src/LabelSharpDesigner.SampleApp/LabelSharpDesigner.SampleApp.csproj" />
     <Project Path="src/LabelSharpDesigner.Serialization/LabelSharpDesigner.Serialization.csproj" />
     <Project Path="src/LabelSharpDesigner.UI.WinForms/LabelSharpDesigner.UI.WinForms.csproj" />
   </Folder>

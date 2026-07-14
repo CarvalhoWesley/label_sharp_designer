@@ -94,6 +94,43 @@ public class LayoutEngineTests
         Assert.Equal("Olá Mundo!", payload.Text);
     }
 
+    /// <summary>Unlike <see cref="VariableElement.Expression"/> (a bare expression), <see cref="BarcodeElement.Data"/>
+    /// goes through the same <c>TemplateResolver</c> path as <see cref="TextElement.Content"/> — free
+    /// text with <c>{{ }}</c> placeholders mixed in, any variable name the label declares.</summary>
+    [Fact]
+    public void Resolve_BarcodeElement_ReplacesPlaceholdersUsingSampleData()
+    {
+        var page = new PageConfig { WidthMm = 50, HeightMm = 50, Dpi = 203 };
+        var document = DocumentWith(
+            page,
+            new BarcodeElement { Id = "b1", Position = PointMm.Zero, Size = new SizeMm(30, 10), Data = "{{codigobarras}}", Symbology = BarcodeSymbology.Code128 });
+
+        var options = new LayoutOptions { SampleData = new Dictionary<string, object?> { ["codigobarras"] = "7891234567890" } };
+
+        var resolved = _engine.Resolve(document, options);
+
+        var payload = Assert.IsType<ResolvedBarcodePayload>(Assert.Single(resolved.Elements).Payload);
+        Assert.Equal("7891234567890", payload.Data);
+    }
+
+    /// <summary><see cref="QrCodeElement.Data"/> resolves the same way as <see cref="BarcodeElement.Data"/>
+    /// — see <see cref="Resolve_BarcodeElement_ReplacesPlaceholdersUsingSampleData"/>.</summary>
+    [Fact]
+    public void Resolve_QrCodeElement_ReplacesPlaceholdersUsingSampleData()
+    {
+        var page = new PageConfig { WidthMm = 50, HeightMm = 50, Dpi = 203 };
+        var document = DocumentWith(
+            page,
+            new QrCodeElement { Id = "q1", Position = PointMm.Zero, Size = new SizeMm(10, 10), Data = "{{qrcode}}" });
+
+        var options = new LayoutOptions { SampleData = new Dictionary<string, object?> { ["qrcode"] = "https://example.com" } };
+
+        var resolved = _engine.Resolve(document, options);
+
+        var payload = Assert.IsType<ResolvedQrCodePayload>(Assert.Single(resolved.Elements).Payload);
+        Assert.Equal("https://example.com", payload.Data);
+    }
+
     /// <summary>Guards the contract <c>NewElementFactory</c>/<c>PropertyPanel</c> rely on:
     /// <see cref="VariableElement.Expression"/> is a bare expression evaluated directly (unlike
     /// <see cref="TextElement.Content"/>, it is never <c>{{ }}</c>-wrapped) — a regression here

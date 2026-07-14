@@ -15,14 +15,24 @@ internal enum NewElementKind
     QrCode,
     Date,
     Time,
-    Variable,
     Image,
     Table,
 }
 
 /// <summary>Builds a ready-to-place default instance of each <see cref="LabelElement"/> subtype for
 /// the editor's "Adicionar" toolbar menu — reasonable size/content so it's immediately visible and
-/// valid (e.g. a barcode symbology that accepts arbitrary data), never so it needs no further editing.</summary>
+/// valid (e.g. a barcode symbology that accepts arbitrary data), never so it needs no further editing.
+///
+/// <para>Deliberately has no case for <see cref="VariableElement"/>: it evaluates a bare expression
+/// with no surrounding text, which is exactly what a <see cref="TextElement"/> whose entire
+/// <c>Content</c> is a single <c>{{ expression }}</c> already does — <c>TemplateResolver</c> resolves
+/// that placeholder and returns just its value, nothing else. There is no longer any label a
+/// <c>VariableElement</c> could express that a <c>TextElement</c> can't, so new labels only ever get
+/// offered the strictly more capable, less error-prone option (no separate "bare expression, not
+/// <c>{{ }}</c>" rule to remember — see <c>ARCHITECTURE.md</c> §8). <c>VariableElement</c> itself is
+/// unchanged everywhere else (model, layout, rendering, serialization, property panel) purely for
+/// backward compatibility: a <c>.label</c> file saved before this change still opens, edits, renders,
+/// and prints exactly as before.</para></summary>
 internal static class NewElementFactory
 {
     public static string Label(NewElementKind kind) => kind switch
@@ -36,7 +46,6 @@ internal static class NewElementFactory
         NewElementKind.QrCode => "QR Code",
         NewElementKind.Date => "Data",
         NewElementKind.Time => "Hora",
-        NewElementKind.Variable => "Variável",
         NewElementKind.Image => "Imagem",
         NewElementKind.Table => "Tabela",
         _ => kind.ToString(),
@@ -120,17 +129,6 @@ internal static class NewElementFactory
                 Format = "HH:mm",
                 Style = TextStyleSpec.Default,
             },
-            // Bare identifier, not "{{variavel}}" — VisitVariable/ElementResolvingVisitor evaluates
-            // Expression directly as an expression (no {{ }} stripping, unlike TextElement.Content),
-            // and the canvas placeholder already adds its own {{ }} wrapper for display.
-            NewElementKind.Variable => new VariableElement
-            {
-                Id = id,
-                Position = position,
-                Size = size,
-                Expression = "variavel",
-                Style = TextStyleSpec.Default,
-            },
             NewElementKind.Image => new ImageElement
             {
                 Id = id,
@@ -158,7 +156,6 @@ internal static class NewElementFactory
         NewElementKind.QrCode => new SizeMm(25, 25),
         NewElementKind.Text => new SizeMm(30, 8),
         NewElementKind.Date or NewElementKind.Time => new SizeMm(30, 8),
-        NewElementKind.Variable => new SizeMm(40, 8),
         NewElementKind.Barcode => new SizeMm(50, 20),
         NewElementKind.Image => new SizeMm(30, 30),
         NewElementKind.Table => new SizeMm(60, 30),

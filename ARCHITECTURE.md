@@ -14,6 +14,11 @@ o mesmo contrato do projeto Flutter original (`docs/ARCHITECTURE.md` lá,
 seções 1–2 e 9) e é o que garante que Canvas, PNG, PDF e PPLA nunca divergem
 entre si.
 
+Se você está integrando o LabelSharpDesigner a partir de **outra aplicação** (em vez de mexer no
+editor em si), veja [INTEGRATION.md](INTEGRATION.md) — um guia de consumo, com exemplo completo em
+`src/LabelSharpDesigner.SampleApp` — ou [USAGE.md](USAGE.md), a referência objetiva de toda a API
+(modelo de documento, elementos, variáveis, resolução, exportação, impressão).
+
 ## 1. Visão geral do pipeline
 
 ```mermaid
@@ -107,6 +112,16 @@ para os projetos de teste). Usa `PolySharp` para poder escrever
   `VariableElement`), despachada via `IElementVisitor<TResult>` (Visitor
   pattern) — usado tanto pelo `LayoutEngine` quanto pelo placeholder do
   canvas.
+  - `VariableElement` é mantido só por compatibilidade com `.label`
+    salvos antes desta observação — não aparece mais no menu "+
+    Adicionar" do editor (`NewElementFactory`). Um `TextElement` cujo
+    `Content` inteiro é um único `{{ expressão }}` já resolve
+    (via `TemplateResolver`) para exatamente o mesmo valor, sem a
+    pegadinha de `VariableElement.Expression` ser uma expressão nua
+    (ver §8) — ou seja, não existe mais nenhum caso que só
+    `VariableElement` resolva. Arquivos antigos com um continuam
+    abrindo/renderizando/imprimindo normalmente; o editor só parou de
+    oferecer a criação de um novo.
 - `ResolvedDocument`/`ResolvedElement`/`ResolvedPayload` — a saída do
   `LayoutEngine`, deliberadamente "cega a metadados": só contém
   `WidthDots`/`HeightDots`/`Dpi`/`Elements`, nunca nome do documento, id ou

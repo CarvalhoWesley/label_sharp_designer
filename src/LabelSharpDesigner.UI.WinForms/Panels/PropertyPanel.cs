@@ -177,6 +177,79 @@ public sealed class PropertyPanel : UserControl
         return box;
     }
 
+    /// <summary>Adds a small button right below <paramref name="field"/> that inserts <c>{{ name }}</c>
+    /// for whichever declared <see cref="LabelVariable"/> the user picks from a dropdown menu, at the
+    /// field's own last known caret position — so building a placeholder never requires remembering the
+    /// <c>{{ }}</c> syntax by hand. For any free-text field that goes through <c>TemplateResolver</c> at
+    /// resolve time (<see cref="TextElement.Content"/>, <see cref="BarcodeElement.Data"/>,
+    /// <see cref="QrCodeElement.Data"/>) — never for <see cref="VariableElement.Expression"/>, which is
+    /// a bare expression, not a template (see <see cref="BuildVariableSection"/>).</summary>
+    private void AddInsertVariableButton(LabelDocument document, TextBox field, Action<string> commit)
+    {
+        var lastSelectionStart = field.Text.Length;
+        var lastSelectionLength = 0;
+
+        void RememberSelection(object? sender, EventArgs e)
+        {
+            lastSelectionStart = field.SelectionStart;
+            lastSelectionLength = field.SelectionLength;
+        }
+
+        field.KeyUp += RememberSelection;
+        field.MouseUp += RememberSelection;
+        field.Enter += RememberSelection;
+
+        // FlatStyle.System works around a .NET 9 dark-mode bug where the default FlatStyle.Standard
+        // renders no button text.
+        var button = new Button { Text = "{{ }} Inserir variável...", AutoSize = true, FlatStyle = FlatStyle.System };
+        button.Click += (_, _) =>
+        {
+            // Deliberately never disposed here: ToolStripDropDown keeps running its own
+            // close/click-processing after Closed fires, and disposing the menu from inside its own
+            // Closed handler races that — the framework then touches the already-disposed menu and
+            // throws "Cannot access a disposed object." Not added to any Controls collection (context
+            // menus never are), so it's never in PropertyPanel.Rebuild()'s "dispose every field
+            // control" pass either — left for the GC/finalizer, same as any other short-lived,
+            // unparented WinForms component.
+            var menu = new ContextMenuStrip();
+            if (document.Variables.Count == 0)
+            {
+                menu.Items.Add(new ToolStripMenuItem("Nenhuma variável cadastrada — veja \"Variáveis...\"") { Enabled = false });
+            }
+            else
+            {
+                foreach (var variable in document.Variables)
+                {
+                    var name = variable.Name;
+                    var item = new ToolStripMenuItem($"{name} ({variable.Type})");
+                    item.Click += (_, _) =>
+                    {
+                        var placeholder = "{{" + name + "}}";
+                        var text = field.Text;
+                        var start = Math.Clamp(lastSelectionStart, 0, text.Length);
+                        var length = Math.Clamp(lastSelectionLength, 0, text.Length - start);
+                        var updated = text[..start] + placeholder + text[(start + length)..];
+
+                        field.Text = updated;
+                        var caret = start + placeholder.Length;
+                        field.Focus();
+                        field.SelectionStart = caret;
+                        field.SelectionLength = 0;
+                        lastSelectionStart = caret;
+                        lastSelectionLength = 0;
+
+                        commit(updated);
+                    };
+                    menu.Items.Add(item);
+                }
+            }
+
+            menu.Show(button, new Point(0, button.Height));
+        };
+
+        AddField(button, 24);
+    }
+
     // ---- common sections ----
 
     private void BuildGeneralSection(LabelDocument document, LabelElement element)
@@ -369,10 +442,10 @@ public sealed class PropertyPanel : UserControl
                 BuildTextSection(document, text);
                 break;
             case BarcodeElement barcode:
-                BuildBarcodeSection(barcode);
+                BuildBarcodeSection(document, barcode);
                 break;
             case QrCodeElement qr:
-                BuildQrCodeSection(qr);
+                BuildQrCodeSection(document, qr);
                 break;
             case ImageElement image:
                 BuildImageSection(image);
@@ -415,9 +488,11 @@ public sealed class PropertyPanel : UserControl
         AddSectionTitle("Texto");
 
         AddLabel("Conteúdo");
+        void CommitContent(string value) => _canvas!.ApplyPropertyChange(e => e is TextElement t ? t with { Content = value } : e, "Conteúdo");
         var contentBox = new TextBox { Text = text.Content, Multiline = true };
-        contentBox.Leave += (_, _) => _canvas!.ApplyPropertyChange(e => e is TextElement t ? t with { Content = contentBox.Text } : e, "Conteúdo");
+        contentBox.Leave += (_, _) => CommitContent(contentBox.Text);
         AddField(contentBox, 60);
+        AddInsertVariableButton(document, contentBox, CommitContent);
 
         AddStyleIdDropdown(
             document.Styles.Where(s => s.Text is not null).ToList(),
@@ -427,13 +502,15 @@ public sealed class PropertyPanel : UserControl
         AddTextStyleFields(text.Style, newStyle => _canvas!.ApplyPropertyChange(e => e is TextElement t ? t with { Style = newStyle } : e, "Estilo de texto"));
     }
 
-    private void BuildBarcodeSection(BarcodeElement barcode)
+    private void BuildBarcodeSection(LabelDocument document, BarcodeElement barcode)
     {
         AddSectionTitle("Código de barras");
 
         AddLabel("Dados");
-        AddField(CreateTextField(barcode.Data, text =>
-            _canvas!.ApplyPropertyChange(e => e is BarcodeElement b ? b with { Data = text } : e, "Dados do código de barras")));
+        void CommitData(string value) => _canvas!.ApplyPropertyChange(e => e is BarcodeElement b ? b with { Data = value } : e, "Dados do código de barras");
+        var dataField = CreateTextField(barcode.Data, CommitData);
+        AddField(dataField);
+        AddInsertVariableButton(document, dataField, CommitData);
 
         AddLabel("Simbologia");
         var symbologyCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
@@ -461,12 +538,15 @@ public sealed class PropertyPanel : UserControl
             _canvas!.ApplyPropertyChange(e => e is BarcodeElement b ? b with { TextSize = value } : e, "Tamanho do texto")));
     }
 
-    private void BuildQrCodeSection(QrCodeElement qr)
+    private void BuildQrCodeSection(LabelDocument document, QrCodeElement qr)
     {
         AddSectionTitle("QR Code");
 
         AddLabel("Dados");
-        AddField(CreateTextField(qr.Data, text => _canvas!.ApplyPropertyChange(e => e is QrCodeElement q ? q with { Data = text } : e, "Dados do QR")));
+        void CommitData(string value) => _canvas!.ApplyPropertyChange(e => e is QrCodeElement q ? q with { Data = value } : e, "Dados do QR");
+        var dataField = CreateTextField(qr.Data, CommitData);
+        AddField(dataField);
+        AddInsertVariableButton(document, dataField, CommitData);
 
         AddLabel("Nível de correção de erro");
         var eccCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };

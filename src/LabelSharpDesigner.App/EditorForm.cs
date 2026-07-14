@@ -1,3 +1,4 @@
+using System.Globalization;
 using LabelSharpDesigner.Core.Document;
 using LabelSharpDesigner.Core.Elements;
 using LabelSharpDesigner.Core.Geometry;
@@ -106,6 +107,21 @@ public sealed class EditorForm : Form
         var propertyPanel = new PropertyPanel { Dock = DockStyle.Fill };
         var previewControl = new RenderPreviewControl { Dock = DockStyle.Fill };
 
+        // Shown instead of previewControl (never on top of it — see the explicit Visible toggling in
+        // RefreshPreview, the same pattern LibraryForm uses for its own grid/empty-state swap) whenever
+        // resolving the document throws — e.g. a variable's default value that doesn't parse for its
+        // declared type, or an expression referencing an unknown/removed variable. Blanking the tab
+        // with no explanation was itself the bug: this surfaces exactly what LayoutEngine.Resolve
+        // failed on instead of leaving the user guessing.
+        var previewErrorLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Padding = new Padding(16),
+            ForeColor = Color.Firebrick,
+            Visible = false,
+        };
+
         // The preview lives in its own tab right next to Propriedades, always one click away,
         // instead of a togglable panel that ate canvas space — it only actually re-renders while its
         // tab is the one showing, so switching to Propriedades doesn't pay the layout-engine cost.
@@ -113,6 +129,7 @@ public sealed class EditorForm : Form
         propertiesTab.Controls.Add(propertyPanel);
         var previewTab = new TabPage("Pré-visualizar");
         previewTab.Controls.Add(previewControl);
+        previewTab.Controls.Add(previewErrorLabel);
         var sidePanelTabs = new TabControl { Dock = DockStyle.Fill };
         sidePanelTabs.TabPages.Add(propertiesTab);
         sidePanelTabs.TabPages.Add(previewTab);
@@ -192,10 +209,15 @@ public sealed class EditorForm : Form
             try
             {
                 previewControl.Document = ResolvePreview();
+                previewErrorLabel.Visible = false;
+                previewControl.Visible = true;
             }
-            catch
+            catch (Exception ex)
             {
                 previewControl.Document = null;
+                previewErrorLabel.Text = $"Não foi possível gerar a pré-visualização:\n\n{ex.Message}";
+                previewControl.Visible = false;
+                previewErrorLabel.Visible = true;
             }
 
             previewControl.Invalidate();
@@ -216,7 +238,12 @@ public sealed class EditorForm : Form
         var pageButton = new ToolStripButton("Página...");
         pageButton.Click += (_, _) => OpenPageSettings();
         toolStrip.Items.Insert(0, pageButton);
-        toolStrip.Items.Insert(1, new ToolStripSeparator());
+
+        var variablesButton = new ToolStripButton("Variáveis...");
+        variablesButton.Click += (_, _) => OpenVariablesDialog();
+        toolStrip.Items.Insert(1, variablesButton);
+
+        toolStrip.Items.Insert(2, new ToolStripSeparator());
 
         _canvas.ViewChanged += (_, _) =>
         {
@@ -254,7 +281,11 @@ public sealed class EditorForm : Form
 
     /// <summary>Resolves the current document (sample data from each variable's default value) for
     /// the "Pré-visualizar" panel — the real rendering pipeline, unlike the canvas's own placeholder
-    /// drawing, so what you see there is what Export/Print will actually produce.</summary>
+    /// drawing, so what you see there is what Export/Print will actually produce. Parses each default
+    /// value per its declared <see cref="VariableValueType"/> (mirroring <c>PrintDialogForm</c>/
+    /// <c>ExportDialogForm</c>'s own <c>ParseSampleValue</c>) rather than passing the raw string
+    /// through — a Number variable used in arithmetic (e.g. <c>{{quantidade + 1}}</c>) must add, not
+    /// concatenate, and must do so identically here and at actual print/export time.</summary>
     private ResolvedDocument? ResolvePreview()
     {
         if (_canvas.Document is not { } document)
@@ -264,10 +295,18 @@ public sealed class EditorForm : Form
 
         var sampleData = document.Variables.ToDictionary(
             variable => variable.Name,
-            object? (variable) => variable.DefaultValue,
+            object? (variable) => ParseSampleValue(variable.Type, variable.DefaultValue ?? string.Empty),
             StringComparer.Ordinal);
         return new LayoutEngine().Resolve(document, new LayoutOptions { SampleData = sampleData });
     }
+
+    private static object? ParseSampleValue(VariableValueType type, string text) => type switch
+    {
+        VariableValueType.Number => double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) ? number : text,
+        VariableValueType.Date => DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ? date : text,
+        VariableValueType.Boolean => bool.TryParse(text, out var boolean) ? boolean : text,
+        _ => text,
+    };
 
     private void OpenPageSettings()
     {
@@ -283,6 +322,25 @@ public sealed class EditorForm : Form
         }
 
         _canvas.ChangeDocument(doc => doc with { Page = dialog.Result }, "Alterar configurações da página");
+    }
+
+    /// <summary>Opens the one place in the editor where <see cref="LabelDocument.Variables"/> itself
+    /// is declared/edited (name, type, default value, description) — independent of whichever
+    /// elements happen to *reference* one by name. See <see cref="VariablesForm"/>.</summary>
+    private void OpenVariablesDialog()
+    {
+        if (_canvas.Document is not { } document)
+        {
+            return;
+        }
+
+        using var dialog = new VariablesForm(document);
+        if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Result is not { } variables)
+        {
+            return;
+        }
+
+        _canvas.ChangeDocument(doc => doc with { Variables = variables }, "Alterar variáveis");
     }
 
     private ToolStrip BuildToolStrip(
@@ -417,15 +475,7 @@ public sealed class EditorForm : Form
         var layerId = document.Layers.FirstOrDefault()?.Id;
         var zIndex = document.Elements.Count == 0 ? 0 : document.Elements.Max(e => e.ZIndex) + 1;
         var element = NewElementFactory.Create(kind, _canvas.ViewportCenterMm(), zIndex, layerId);
-
-        // A freshly inserted VariableElement's default expression is a bare identifier ("variavel")
-        // that isn't declared anywhere yet — evaluating an undeclared identifier throws and blanks
-        // the whole preview (see ElementResolvingVisitor.VisitVariable/Evaluator.ResolveIdentifier),
-        // so register a matching document-level variable in the same undo step.
-        var newVariables = element is VariableElement variable
-            ? new[] { new LabelVariable { Name = variable.Expression, DefaultValue = "Valor" } }
-            : null;
-        _canvas.AddElement(element, newVariables);
+        _canvas.AddElement(element);
     }
 
     private void Save()
