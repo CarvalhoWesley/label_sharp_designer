@@ -1,0 +1,27 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Company>G3Soft</Company>
+    <Product>LabelSharpDesigner</Product>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!-- Domain/logic projects (not UI, not App, not test projects) build warning-free by policy. -->
+  <PropertyGroup Condition="!$(MSBuildProjectName.Contains('.Tests')) AND '$(MSBuildProjectName)' != 'LabelSharpDesigner.UI.WinForms' AND '$(MSBuildProjectName)' != 'LabelSharpDesigner.App'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Polyfills init/required/records-supporting compiler types for the netstandard2.0 leg of
+       multi-targeted (netstandard2.0;net9.0) projects, so the legacy-referenceable core libraries
+       can still use modern C# record/required-member syntax. No-op on TFMs that already ship them. -->
+  <ItemGroup>
+    <PackageReference Include="PolySharp" Version="1.16.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
