@@ -243,28 +243,190 @@ internal static class MinhasPreferenciasStore
 }
 ```
 
-## 3. Caminho B — aplicação legada (.NET Framework 4.x)
+## 3. Caminho B — aplicação legada (ASP.NET Framework / .NET Framework 4.x)
 
 Se a sua aplicação não pode referenciar `net9.0-windows` diretamente, ela abre o
 `LabelSharpDesigner.App.exe` como processo satélite só para editar **um** arquivo `.label` por vez
 — sem a biblioteca inteira, sem as telas de produto/impressão em lote deste guia (essas continuam
 sendo responsabilidade da sua própria aplicação, chamando o satélite só pela parte visual do
-editor).
+editor). Esta seção é o passo a passo completo para quando você só quer **a tela de desenhar a
+etiqueta**, nada mais — nenhuma outra parte deste guia (biblioteca, vínculo de campos, impressão em
+lote) é necessária para isso.
+
+### 3.0 Antes de começar: onde esse código vai rodar
+
+`LegacyLauncher.Launch` faz um `Process.Start` de um `.exe` do Windows Forms **e bloqueia até o
+usuário fechar a janela**. Isso só mostra uma janela de verdade pra alguém quando o processo que
+chama roda numa **sessão de desktop interativa** — a mesma máquina, o mesmo usuário logado que vai
+ver o editor.
+
+- **Funciona direto**: IIS Express local (debug no Visual Studio), uma aplicação intranet onde cada
+  estação roda seu próprio IIS/IIS Express como o usuário logado, ou qualquer cenário onde "o
+  servidor" é, na prática, o computador da pessoa que vai desenhar a etiqueta.
+- **Não funciona**: IIS "de verdade" hospedado num servidor, atendendo usuários remotos pelo
+  navegador. Um site de produção roda o worker process do IIS na *Session 0* do Windows (isolada de
+  qualquer área de trabalho desde o Vista/Server 2008) — `Process.Start` ali não mostra nada para o
+  usuário do navegador, só abre uma janela invisível na sessão 0 (ou falha, dependendo da versão do
+  Windows). Se for esse o seu caso, esse caminho por `Process.Start` não serve como está documentado
+  aqui — o editor precisaria rodar na máquina do usuário e ser disparado por outro mecanismo (ex.:
+  instalado localmente e acionado por um esquema de URI customizado registrado no Windows), o que
+  está fora do escopo deste guia.
+
+Os passos abaixo assumem o primeiro cenário.
+
+### 3.1 Publique o `LabelSharpDesigner.App.exe`
+
+```powershell
+dotnet publish src/LabelSharpDesigner.App -c Release -r win-x64 --self-contained false
+```
+
+Copie a pasta de saída (`LabelSharpDesigner.App.exe` + DLLs ao lado) para um caminho fixo acessível
+pela sua aplicação — por exemplo `C:\LabelSharpDesigner\LabelSharpDesigner.App.exe`. Esse caminho é
+inteiramente decisão sua (rede, `Program Files`, o que fizer sentido no seu ambiente).
+
+### 3.2 Compile e referencie o `Legacy.Bridge`
+
+```powershell
+dotnet build src/LabelSharpDesigner.Legacy.Bridge -f netstandard2.0 -c Release
+```
+
+Isso gera `src/LabelSharpDesigner.Legacy.Bridge/bin/Release/netstandard2.0/LabelSharpDesigner.Legacy.Bridge.dll`
+— sem nenhuma dependência externa (só BCL), então basta referenciar essa única DLL no seu projeto
+ASP.NET Framework:
+
+```xml
+<!-- no .csproj do projeto ASP.NET Framework (formato clássico) -->
+<Reference Include="LabelSharpDesigner.Legacy.Bridge">
+  <HintPath>C:\LabelSharpDesigner\LabelSharpDesigner.Legacy.Bridge.dll</HintPath>
+</Reference>
+```
+
+Requer .NET Framework **4.6.1 ou superior** (é o mínimo que consome `netstandard2.0`; 4.7.2+
+recomendado). Não precisa de NuGet nem de `bindingRedirect` — a DLL não traz dependências
+transitivas.
+
+### 3.3 Decida onde os `.label` ficam
+
+Você não precisa do `LibraryRepository`/`LibraryForm` nem de nada parecido com "biblioteca" — só um
+arquivo por etiqueta, no caminho que fizer sentido no seu domínio (uma coluna `CaminhoEtiqueta` na
+sua tabela de produtos/pedidos, uma pasta `~/App_Data/Labels/{id}.label`, um compartilhamento de
+rede — o `LegacyLauncher` aceita qualquer caminho absoluto). Se o arquivo ainda não existe, crie um
+documento em branco antes de chamar o editor:
 
 ```csharp
-// no seu projeto .NET Framework 4.x, referenciando LabelSharpDesigner.Legacy.Bridge (netstandard2.0)
-var request = new LaunchRequest { FilePath = caminhoDoArquivoLabel, ReadOnly = false };
-var result = LegacyLauncher.Launch(request); // faz o Process.Start do App.exe e espera terminar
+using LabelSharpDesigner.Core.Document;
+using LabelSharpDesigner.Serialization;
 
-switch (result.Outcome)
+if (!File.Exists(caminhoDoLabel))
 {
-    case LaunchOutcome.Saved:     /* recarregue o arquivo, ele foi sobrescrito */ break;
-    case LaunchOutcome.Cancelled: /* usuário fechou sem salvar */ break;
-    case LaunchOutcome.Error:     /* arquivo inválido/corrompido */ break;
+    var documentoEmBranco = new LabelDocument
+    {
+        Name = "Nova etiqueta",
+        Page = new PageConfig { WidthMm = 100, HeightMm = 60, Dpi = 203 },
+        Layers = [new LabelLayer { Id = "layer-1", Name = "Base", Order = 0 }],
+    };
+    File.WriteAllText(caminhoDoLabel, LabelDocumentCodec.Save(documentoEmBranco));
 }
 ```
 
-Detalhes do contrato completo (argumentos de linha de comando, código de saída) estão em
+(`LabelSharpDesigner.Core`/`Serialization` também são `netstandard2.0` — podem ser referenciados do
+mesmo jeito, se você quiser montar/ler o documento sem abrir o editor. Ver [USAGE.md §2/§8](USAGE.md).)
+
+### 3.4 Chame o editor
+
+`LegacyLauncher` é uma classe normal, não estática — instancie com o caminho do `.exe` publicado no
+passo 3.1:
+
+```csharp
+using LabelSharpDesigner.Legacy.Bridge;
+
+var launcher = new LegacyLauncher(@"C:\LabelSharpDesigner\LabelSharpDesigner.App.exe");
+var request = new LaunchRequest { FilePath = caminhoDoLabel, ReadOnly = false };
+LaunchResult result = launcher.Launch(request); // bloqueia até o usuário fechar a janela do editor
+
+switch (result.Outcome)
+{
+    case LaunchOutcome.Saved:
+        // o arquivo em caminhoDoLabel foi sobrescrito — recarregue/atualize sua miniatura
+        break;
+    case LaunchOutcome.Cancelled:
+        // fechou sem salvar (ou a sessão era ReadOnly = true) — nada mudou no arquivo
+        break;
+    case LaunchOutcome.Error:
+        // não deu para abrir o arquivo (corrompido, formato inválido) — avise o usuário
+        break;
+}
+```
+
+**Exemplo — ASP.NET MVC**, um botão "Desenhar etiqueta" na tela de um produto:
+
+```csharp
+public class EtiquetaController : Controller
+{
+    private const string AppExePath = @"C:\LabelSharpDesigner\LabelSharpDesigner.App.exe";
+
+    [HttpPost]
+    public ActionResult Desenhar(int produtoId)
+    {
+        var caminho = CaminhoDoLabel(produtoId); // sua própria convenção de nomeação
+        GarantirDocumentoEmBranco(caminho);       // passo 3.3
+
+        var launcher = new LegacyLauncher(AppExePath);
+        var result = launcher.Launch(new LaunchRequest { FilePath = caminho });
+
+        TempData["EtiquetaSalva"] = result.Outcome == LaunchOutcome.Saved;
+        return RedirectToAction("Detalhes", new { id = produtoId });
+    }
+}
+```
+
+**Exemplo — Web Forms**, no code-behind de um botão:
+
+```csharp
+protected void BtnDesenharEtiqueta_Click(object sender, EventArgs e)
+{
+    var caminho = CaminhoDoLabel(ProdutoIdAtual);
+    GarantirDocumentoEmBranco(caminho);
+
+    var launcher = new LegacyLauncher(AppExePath);
+    var result = launcher.Launch(new LaunchRequest { FilePath = caminho });
+
+    lblStatus.Text = result.Outcome == LaunchOutcome.Saved ? "Etiqueta salva." : "Nada foi alterado.";
+}
+```
+
+Nos dois casos a requisição/postback só retorna depois que o usuário fecha a janela do editor — é
+esperado (ver 3.0); não tente tornar isso assíncrono/"fire and forget", já que a resposta HTTP
+depende do `LaunchOutcome`.
+
+### 3.5 (Opcional) Miniatura da etiqueta sem abrir o editor
+
+Pra mostrar um preview no seu grid/lista sem instanciar nenhuma UI, resolva e exporte PNG
+diretamente (`Core`/`Layout`/`Rendering.Png`, todos `netstandard2.0`):
+
+```csharp
+using LabelSharpDesigner.Layout;
+using LabelSharpDesigner.Rendering.Png;
+
+var documento = LabelDocumentCodec.Load(File.ReadAllText(caminhoDoLabel));
+var amostra = documento.Variables.ToDictionary(v => v.Name, object? (v) => v.DefaultValue);
+var resolvido = new LayoutEngine().Resolve(documento, new LayoutOptions { SampleData = amostra });
+byte[] png = PngExporter.ExportScaled(resolvido, targetWidthPx: 240);
+```
+
+### 3.6 Checklist — Caminho B
+
+- [ ] O código que chama `LegacyLauncher.Launch` roda numa sessão de desktop interativa da máquina
+      do usuário (3.0) — não num IIS de produção atendendo clientes remotos.
+- [ ] `LabelSharpDesigner.App.exe` está publicado (3.1) num caminho que o processo da sua aplicação
+      consegue alcançar.
+- [ ] Você referenciou só a DLL `netstandard2.0` do `Legacy.Bridge` — nada de `net9.0-windows`, isso
+      nunca compilaria contra .NET Framework.
+- [ ] `new LegacyLauncher(caminhoDoExe)` — é instância, não `LegacyLauncher.Launch(...)` estático.
+- [ ] Você trata os três `LaunchOutcome` (`Saved`/`Cancelled`/`Error`), não só o caminho feliz.
+
+Detalhes do contrato completo (formato exato dos argumentos de linha de comando, como o satélite
+detecta modo de edição direta vs. modo biblioteca) estão em
 [ARCHITECTURE.md §7](ARCHITECTURE.md#7-integração-com-o-legado--labelsharpdesignerlegacybridge).
 
 ## 4. Checklist antes de integrar
