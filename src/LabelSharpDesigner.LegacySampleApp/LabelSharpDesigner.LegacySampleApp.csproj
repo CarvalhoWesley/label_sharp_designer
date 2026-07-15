@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <!-- Domain/rendering libs multi-target netstandard2.0;net9.0 — MSBuild picks the netstandard2.0
+         leg automatically for this net48 consumer, the same libs a real .NET Framework 4.x host
+         would reference (see INTEGRATION.md, "Caminho B"). -->
+    <ProjectReference Include="..\LabelSharpDesigner.Core\LabelSharpDesigner.Core.csproj" />
+    <ProjectReference Include="..\LabelSharpDesigner.Serialization\LabelSharpDesigner.Serialization.csproj" />
+    <ProjectReference Include="..\LabelSharpDesigner.Layout\LabelSharpDesigner.Layout.csproj" />
+    <ProjectReference Include="..\LabelSharpDesigner.Rendering.Canvas\LabelSharpDesigner.Rendering.Canvas.csproj" />
+    <ProjectReference Include="..\LabelSharpDesigner.Rendering.Pdf\LabelSharpDesigner.Rendering.Pdf.csproj" />
+    <ProjectReference Include="..\LabelSharpDesigner.Rendering.ArgoxPpla\LabelSharpDesigner.Rendering.ArgoxPpla.csproj" />
+    <!-- Deliberately NOT referencing LabelSharpDesigner.App (LibraryForm/LibraryRepository) — this app
+         manages its own label catalog and only invokes the plugin's editor, via Legacy.Bridge, exactly
+         like a real .NET Framework 4.x host would (it couldn't reference App at all: App is
+         net9.0-windows-only, a different, incompatible runtime). PrintTransport.Windows and
+         UI.WinForms are net9.0-windows-only too, for the same reason — see Printing/ for the
+         net48-native reimplementation of the printer-transport pieces this app still needs. -->
+    <ProjectReference Include="..\LabelSharpDesigner.Legacy.Bridge\LabelSharpDesigner.Legacy.Bridge.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    <PackageReference Include="SkiaSharp" Version="4.150.0" />
+    <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="4.150.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon />
+    <!-- Same policy exemption Directory.Build.props grants LabelSharpDesigner.App/SampleApp: a WinForms
+         host app, not a domain/logic library. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

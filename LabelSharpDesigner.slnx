@@ -7,6 +7,7 @@
     <Project Path="src/LabelSharpDesigner.History/LabelSharpDesigner.History.csproj" />
     <Project Path="src/LabelSharpDesigner.Layout/LabelSharpDesigner.Layout.csproj" />
     <Project Path="src/LabelSharpDesigner.Legacy.Bridge/LabelSharpDesigner.Legacy.Bridge.csproj" />
+    <Project Path="src/LabelSharpDesigner.LegacySampleApp/LabelSharpDesigner.LegacySampleApp.csproj" />
     <Project Path="src/LabelSharpDesigner.PrintTransport.Windows/LabelSharpDesigner.PrintTransport.Windows.csproj" />
     <Project Path="src/LabelSharpDesigner.Rendering.Abstractions/LabelSharpDesigner.Rendering.Abstractions.csproj" />
     <Project Path="src/LabelSharpDesigner.Rendering.ArgoxPpla/LabelSharpDesigner.Rendering.ArgoxPpla.csproj" />
