@@ -2,9 +2,7 @@
 
 Versão enxuta de [INTEGRATION.md §3](INTEGRATION.md#3-caminho-b--aplicação-legada-aspnet-framework--net-framework-4x)
 com só o essencial: **implementar o editor**, **gerenciar as etiquetas criadas** e **imprimir**, já
-com as três decisões de produto abaixo fixadas em código (não são opção do usuário final). Para
-detalhes/casos de borda (hospedagem em IIS de produção, contrato completo da linha de comando etc.)
-volte para [INTEGRATION.md](INTEGRATION.md) e [ARCHITECTURE.md §7](ARCHITECTURE.md#7-integração-com-o-legado--labelsharpdesignerlegacybridge).
+com as três decisões de produto abaixo fixadas em código (não são opção do usuário final). 
 Existe um exemplo funcionando de ponta a ponta em
 [`src/LabelSharpDesigner.LegacySampleApp`](src/LabelSharpDesigner.LegacySampleApp) — todo trecho
 abaixo foi tirado (ou simplificado) direto dele.
@@ -13,13 +11,12 @@ abaixo foi tirado (ou simplificado) direto dele.
 
 | Ponto | Decisão |
 |---|---|
-| Elementos que o "+ Adicionar" do editor oferece | Só **Texto, Linha, Código de barras, QR Code, Imagem** — o resto (retângulo, elipse, tabela, data/hora...) não aparece |
-| Painel de camadas | Nunca exibido |
+| Elementos disponiveis que editor oferece | Só **Texto, Linha, Código de barras, QR Code, Imagem** — o resto (retângulo, elipse, tabela, data/hora...) não aparece |
 | Formato de impressão | Diálogo sempre abre em **PPLA raster** com **Transferência térmica (ribbon)** já selecionados — o usuário ainda pode trocar na hora, mas nunca é PDF/térmica direta por padrão |
 
 ## Antes de começar: onde esse código roda
 
-O editor abre como processo separado (`Process.Start` bloqueante) — só mostra uma janela de verdade
+O editor abre como processo separado (`Process.Start`) — só mostra uma janela de verdade
 numa **sessão de desktop interativa** (a própria máquina do usuário, IIS/IIS Express local). Não
 funciona atrás de um IIS de produção atendendo clientes remotos (Session 0). Ver
 [INTEGRATION.md §3.0](INTEGRATION.md#30-antes-de-começar-onde-esse-código-vai-rodar) se esse for o
