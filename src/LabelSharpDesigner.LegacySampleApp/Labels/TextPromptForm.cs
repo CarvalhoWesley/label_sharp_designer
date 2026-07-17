@@ -19,9 +19,11 @@ public sealed class TextPromptForm : Form
         MinimizeBox = false;
 
         var content = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12) };
-        content.Controls.Add(new Label { Text = label, Left = 0, Top = 0, Width = 320, Height = 18 });
+        var left = content.Padding.Left;
+        var top = content.Padding.Top;
+        content.Controls.Add(new Label { Text = label, Left = left, Top = top, Width = 320, Height = 18 });
 
-        _textBox = new TextBox { Left = 0, Top = 22, Width = 320, Text = initialValue };
+        _textBox = new TextBox { Left = left, Top = top + 22, Width = 320, Text = initialValue };
         content.Controls.Add(_textBox);
 
         var buttonPanel = new FlowLayoutPanel

@@ -282,10 +282,6 @@ public sealed class PropertyPanel : UserControl
         AddField(CreateNumeric((decimal)Math.Round(element.Opacity * 100), 0, 100, 0, value =>
             _canvas!.ApplyPropertyChange(e => e with { Opacity = value / 100.0 }, "Opacidade")));
 
-        var visibleCheck = new CheckBox { Text = "Visível", Checked = element.Visible };
-        visibleCheck.CheckedChanged += (_, _) => _canvas!.ApplyPropertyChange(e => e with { Visible = visibleCheck.Checked }, "Visibilidade");
-        AddField(visibleCheck);
-
         var lockedCheck = new CheckBox { Text = "Bloqueado", Checked = element.Locked };
         lockedCheck.CheckedChanged += (_, _) => _canvas!.ApplyPropertyChange(e => e with { Locked = lockedCheck.Checked }, "Bloqueio");
         AddField(lockedCheck);

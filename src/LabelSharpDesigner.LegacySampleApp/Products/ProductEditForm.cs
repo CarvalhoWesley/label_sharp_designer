@@ -22,25 +22,26 @@ public sealed class ProductEditForm : Form
 
         var content = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12) };
 
-        var top = 0;
+        var left = content.Padding.Left;
+        var top = content.Padding.Top;
 
         Label AddLabel(string text)
         {
-            var label = new Label { Text = text, Left = 0, Top = top, Width = 320, Height = 18 };
+            var label = new Label { Text = text, Left = left, Top = top, Width = 320, Height = 18 };
             content.Controls.Add(label);
             top += 20;
             return label;
         }
 
         AddLabel("Descrição");
-        _descriptionBox = new TextBox { Left = 0, Top = top, Width = 320, Text = existing?.Description ?? string.Empty };
+        _descriptionBox = new TextBox { Left = left, Top = top, Width = 320, Text = existing?.Description ?? string.Empty };
         content.Controls.Add(_descriptionBox);
         top += 34;
 
         AddLabel("Preço");
         _priceUpDown = new NumericUpDown
         {
-            Left = 0,
+            Left = left,
             Top = top,
             Width = 140,
             Minimum = 0,
@@ -53,7 +54,7 @@ public sealed class ProductEditForm : Form
         top += 34;
 
         AddLabel("Código de barras");
-        _barcodeBox = new TextBox { Left = 0, Top = top, Width = 320, Text = existing?.Barcode ?? string.Empty };
+        _barcodeBox = new TextBox { Left = left, Top = top, Width = 320, Text = existing?.Barcode ?? string.Empty };
         content.Controls.Add(_barcodeBox);
         top += 34;
 

@@ -13,6 +13,8 @@ public sealed class LibraryForm : Form
 {
     private readonly LibraryRepository _repository;
     private readonly AppThemeMode _currentThemeMode;
+    private readonly IReadOnlyCollection<NewElementKind>? _allowedElementKinds;
+    private readonly bool _showLayersPanel;
     private readonly FlowLayoutPanel _grid;
     private readonly Panel _emptyState;
 
@@ -23,10 +25,18 @@ public sealed class LibraryForm : Form
     /// recreating the form rather than restyling this one in place.</summary>
     public AppThemeMode? RequestedThemeMode { get; private set; }
 
-    public LibraryForm(LibraryRepository repository, AppThemeMode currentThemeMode = AppThemeMode.System)
+    /// <param name="allowedElementKinds">Forwarded as-is to every <see cref="EditorForm"/> this library
+    /// opens (see that constructor's own doc) — <see langword="null"/> or empty offers every element
+    /// type, same default as the editor itself.</param>
+    /// <param name="showLayersPanel">Forwarded as-is to every <see cref="EditorForm"/> this library
+    /// opens (see that constructor's own doc) — defaults to <see langword="true"/>, same as the editor
+    /// itself.</param>
+    public LibraryForm(LibraryRepository repository, AppThemeMode currentThemeMode = AppThemeMode.System, IReadOnlyCollection<NewElementKind>? allowedElementKinds = null, bool showLayersPanel = true)
     {
         _repository = repository;
         _currentThemeMode = currentThemeMode;
+        _allowedElementKinds = allowedElementKinds;
+        _showLayersPanel = showLayersPanel;
 
         Text = "LabelSharpDesigner — Biblioteca";
         Width = 1000;
@@ -207,7 +217,7 @@ public sealed class LibraryForm : Form
     private void OpenEditor(LibraryEntry entry)
     {
         var current = entry;
-        using var editor = new EditorForm(current.Document, document => current = _repository.Save(current, document));
+        using var editor = new EditorForm(current.Document, document => current = _repository.Save(current, document), _allowedElementKinds, _showLayersPanel);
         editor.ShowDialog(this);
         Refresh_();
     }

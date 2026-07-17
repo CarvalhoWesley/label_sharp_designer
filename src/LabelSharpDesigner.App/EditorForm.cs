@@ -19,6 +19,7 @@ public sealed class EditorForm : Form
     private readonly ToolStripButton _redoButton;
     private readonly ToolStripLabel _zoomLabel;
     private readonly Action<LabelDocument>? _onSave;
+    private readonly IReadOnlyCollection<NewElementKind>? _allowedElementKinds;
     private bool _suppressGeometryFieldEvents;
 
     /// <summary>
@@ -28,9 +29,24 @@ public sealed class EditorForm : Form
     /// the callback, mirroring the original Flutter <c>LabelDesigner.onSave</c> hand-off to
     /// <c>EditorScreen</c>/<c>LibraryRepository</c>.
     /// </summary>
-    public EditorForm(LabelDocument document, Action<LabelDocument>? onSave = null)
+    /// <param name="allowedElementKinds">Which element types the "+ Adicionar" menu offers.
+    /// <see langword="null"/> or empty (the default) offers every <see cref="NewElementKind"/> — pass a
+    /// subset (e.g. <c>[NewElementKind.Text, NewElementKind.Barcode, NewElementKind.QrCode]</c>) to
+    /// restrict the toolbox to only what a given integration actually needs. This never touches
+    /// elements a document already contains — only what can be newly added — so opening a document
+    /// with kinds outside this set (e.g. one designed before the restriction existed) still displays
+    /// and edits them normally.</param>
+    /// <param name="showLayersPanel">Whether the layers sidebar (and its splitter/collapse strip) is
+    /// offered at all. Defaults to <see langword="true"/> — the existing behavior, where the end user
+    /// can still show/hide it themselves at will (that per-user open/closed state is
+    /// <see cref="EditorLayoutSettingsStore"/>'s own concern). Passing <see langword="false"/> is a
+    /// stronger, developer-level restriction: the panel is never built at all, regardless of what that
+    /// end-user preference says — for an integration whose documents never use more than one layer, so
+    /// there is nothing for the panel to manage.</param>
+    public EditorForm(LabelDocument document, Action<LabelDocument>? onSave = null, IReadOnlyCollection<NewElementKind>? allowedElementKinds = null, bool showLayersPanel = true)
     {
         _onSave = onSave;
+        _allowedElementKinds = allowedElementKinds is { Count: > 0 } ? allowedElementKinds : null;
         var layout = EditorLayoutSettingsStore.Load();
 
         Text = "LabelSharpDesigner — Editor";
@@ -96,7 +112,10 @@ public sealed class EditorForm : Form
         var layersPanel = new LayersPanel { Dock = DockStyle.Left, Width = Math.Max(layout.LayersPanelWidth, 120), MinimumSize = new Size(120, 0) };
         // A Splitter docked on the same edge, added right after its panel, gives that panel a
         // drag-to-resize handle (see the Controls.Add order below for why add-order matters here).
-        var layersSplitter = new Splitter { Dock = DockStyle.Left, Width = 4 };
+        // BackColor set explicitly — Splitter otherwise paints the same SystemColors.Control as
+        // everything around it, so the draggable seam was invisible (functional, but undiscoverable:
+        // nobody could tell where to grab it).
+        var layersSplitter = new Splitter { Dock = DockStyle.Left, Width = 5, BackColor = SystemColors.ControlDark };
         // Shown instead of layersPanel/layersSplitter while collapsed — a thin strip with just a
         // reopen button, the same "auto-hide" shape Visual Studio leaves behind for a closed tool
         // window, so the panel is never more than one click away even when hidden.
@@ -143,7 +162,8 @@ public sealed class EditorForm : Form
         var sidePanelContainer = new Panel { Dock = DockStyle.Right, Width = Math.Max(layout.SidePanelWidth, 160), MinimumSize = new Size(160, 0) };
         sidePanelContainer.Controls.Add(sidePanelTabs);
         sidePanelContainer.Controls.Add(sidePanelHeader);
-        var sidePanelSplitter = new Splitter { Dock = DockStyle.Right, Width = 4 };
+        // Same visible-seam treatment as layersSplitter above.
+        var sidePanelSplitter = new Splitter { Dock = DockStyle.Right, Width = 5, BackColor = SystemColors.ControlDark };
         var sidePanelCollapsedStrip = new Panel { Dock = DockStyle.Right, Width = 24, Visible = false };
         var sidePanelReopenButton = new Button { Text = "◀", Dock = DockStyle.Top, Height = 24, FlatStyle = FlatStyle.System };
         sidePanelCollapsedStrip.Controls.Add(sidePanelReopenButton);
@@ -182,7 +202,11 @@ public sealed class EditorForm : Form
             EditorLayoutSettingsStore.Save(layout);
         };
 
-        SetLayersVisible(layout.LayersPanelVisible);
+        if (showLayersPanel)
+        {
+            SetLayersVisible(layout.LayersPanelVisible);
+        }
+
         SetSidePanelVisible(layout.SidePanelVisible);
 
         var hRuler = new RulerControl { Dock = DockStyle.Fill, Orientation = Orientation.Horizontal };
@@ -260,14 +284,22 @@ public sealed class EditorForm : Form
         Controls.Add(sidePanelContainer);
         Controls.Add(sidePanelSplitter);
         Controls.Add(sidePanelCollapsedStrip);
-        Controls.Add(layersPanel);
-        Controls.Add(layersSplitter);
-        Controls.Add(layersCollapsedStrip);
+        if (showLayersPanel)
+        {
+            Controls.Add(layersPanel);
+            Controls.Add(layersSplitter);
+            Controls.Add(layersCollapsedStrip);
+        }
+
         Controls.Add(toolStrip);
         Controls.Add(statusBar);
 
         _canvas.Document = document;
-        layersPanel.Canvas = _canvas;
+        if (showLayersPanel)
+        {
+            layersPanel.Canvas = _canvas;
+        }
+
         propertyPanel.Canvas = _canvas;
 
         // Grid/snap/guides are read from the document now (see LabelCanvasControl.EditorSettings), so
@@ -363,7 +395,7 @@ public sealed class EditorForm : Form
         }
 
         var addButton = new ToolStripDropDownButton("+ Adicionar");
-        foreach (var kind in Enum.GetValues<NewElementKind>())
+        foreach (var kind in _allowedElementKinds ?? (IReadOnlyCollection<NewElementKind>)Enum.GetValues<NewElementKind>())
         {
             var item = new ToolStripMenuItem(NewElementFactory.Label(kind));
             item.Click += (_, _) => AddElement(kind);

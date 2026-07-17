@@ -64,6 +64,7 @@ public sealed class ExportDialogForm : Form
         var leftPanel = new Panel { Dock = DockStyle.Left, Width = 340 };
         _leftContent = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(12) };
         leftPanel.Controls.Add(_leftContent);
+        _top = _leftContent.Padding.Top;
 
         _preview = new RenderPreviewControl { Dock = DockStyle.Fill };
         _placeholderLabel = new Label
@@ -85,7 +86,7 @@ public sealed class ExportDialogForm : Form
         Controls.Add(buttonPanel);
 
         AddLabel("Formato");
-        _formatCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Left = 0, Top = _top };
+        _formatCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Left = _leftContent.Padding.Left, Top = _top };
         _formatCombo.Items.AddRange(["Projeto (.label)", "PDF vetorial", "Imagem (PNG)"]);
         _formatCombo.SelectedIndexChanged += (_, _) => RebuildForFormat();
         _leftContent.Controls.Add(_formatCombo);
@@ -98,7 +99,7 @@ public sealed class ExportDialogForm : Form
 
     private void AddLabel(string text)
     {
-        var label = new Label { Text = text, Left = 0, Top = _top, Width = 300, Height = 18 };
+        var label = new Label { Text = text, Left = _leftContent.Padding.Left, Top = _top, Width = 300, Height = 18 };
         _leftContent.Controls.Add(label);
         _top += 20;
     }
@@ -113,7 +114,7 @@ public sealed class ExportDialogForm : Form
         AddLabel("Dados de amostra");
         var sectionTop = _top;
         var height = _document.Variables.Count * 46;
-        _sampleDataSection = new Panel { Left = 0, Top = sectionTop, Width = 300, Height = height };
+        _sampleDataSection = new Panel { Left = _leftContent.Padding.Left, Top = sectionTop, Width = 300, Height = height };
 
         var rowTop = 0;
         foreach (var variable in _document.Variables)
@@ -142,7 +143,7 @@ public sealed class ExportDialogForm : Form
         if (format == ExportFormat.Png)
         {
             AddLabel("Resolução");
-            _pngScaleCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120, Left = 0, Top = _top };
+            _pngScaleCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120, Left = _leftContent.Padding.Left, Top = _top };
             _pngScaleCombo.Items.AddRange(["1x", "2x", "3x"]);
             _pngScaleCombo.SelectedIndex = 1;
             _pngScaleCombo.SelectedIndexChanged += (_, _) => UpdatePreview();

@@ -30,29 +30,30 @@ public sealed class VariableMappingForm : Form
         MinimizeBox = false;
 
         var content = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(12) };
+        var left = content.Padding.Left;
 
         if (document.Variables.Count == 0)
         {
             content.Controls.Add(new Label
             {
                 Text = "Esta etiqueta não declara nenhuma variável {{ }} para preencher.",
-                Left = 0,
-                Top = 0,
+                Left = left,
+                Top = content.Padding.Top,
                 Width = 400,
                 Height = 40,
             });
         }
         else
         {
-            var top = 0;
-            content.Controls.Add(new Label { Text = "Variável da etiqueta", Left = 0, Top = top, Width = 200, Font = new Font(Font, FontStyle.Bold) });
-            content.Controls.Add(new Label { Text = "Campo do produto", Left = 210, Top = top, Width = 200, Font = new Font(Font, FontStyle.Bold) });
+            var top = content.Padding.Top;
+            content.Controls.Add(new Label { Text = "Variável da etiqueta", Left = left, Top = top, Width = 200, Font = new Font(Font, FontStyle.Bold) });
+            content.Controls.Add(new Label { Text = "Campo do produto", Left = left + 210, Top = top, Width = 200, Font = new Font(Font, FontStyle.Bold) });
             top += 26;
 
             foreach (var variable in document.Variables)
             {
-                var label = new Label { Text = $"{variable.Name} ({variable.Type})", Left = 0, Top = top + 3, Width = 200, Height = 18 };
-                var combo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = 210, Top = top, Width = 210 };
+                var label = new Label { Text = $"{variable.Name} ({variable.Type})", Left = left, Top = top + 3, Width = 200, Height = 18 };
+                var combo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = left + 210, Top = top, Width = 210 };
                 combo.Items.AddRange(FieldOptions);
                 combo.SelectedIndex = current.TryGetValue(variable.Name, out var source) ? (int)source : (int)ProductFieldSource.LabelDefault;
 

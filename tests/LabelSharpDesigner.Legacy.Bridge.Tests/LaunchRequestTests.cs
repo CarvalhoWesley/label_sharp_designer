@@ -83,6 +83,120 @@ public class LaunchRequestTests
     }
 
     [Fact]
+    public void ToCommandLineArguments_OmitsHideLayersPanelFlagByDefault()
+    {
+        var request = new LaunchRequest { FilePath = @"C:\labels\a.label" };
+
+        Assert.DoesNotContain("--hide-layers-panel", request.ToCommandLineArguments());
+    }
+
+    [Fact]
+    public void ToCommandLineArguments_AppendsHideLayersPanelFlagWhenDisabled()
+    {
+        var request = new LaunchRequest { FilePath = @"C:\labels\a.label", ShowLayersPanel = false };
+
+        Assert.Equal(@"--edit C:\labels\a.label --hide-layers-panel", request.ToCommandLineArguments());
+    }
+
+    [Fact]
+    public void ToCommandLineArguments_AppendsHideLayersPanelBetweenReadOnlyAndElements()
+    {
+        var request = new LaunchRequest { FilePath = @"C:\labels\a.label", ReadOnly = true, ShowLayersPanel = false, AllowedElementKinds = ["Text"] };
+
+        Assert.Equal(@"--edit C:\labels\a.label --readonly --hide-layers-panel --elements Text", request.ToCommandLineArguments());
+    }
+
+    [Fact]
+    public void TryParse_DecodesHideLayersPanelFlag()
+    {
+        var ok = LaunchRequest.TryParse(["--edit", @"C:\labels\a.label", "--hide-layers-panel"], out var request);
+
+        Assert.True(ok);
+        Assert.False(request!.ShowLayersPanel);
+    }
+
+    [Fact]
+    public void TryParse_DefaultsShowLayersPanelToTrueWhenFlagAbsent()
+    {
+        var ok = LaunchRequest.TryParse(["--edit", @"C:\labels\a.label"], out var request);
+
+        Assert.True(ok);
+        Assert.True(request!.ShowLayersPanel);
+    }
+
+    [Fact]
+    public void EncodeThenDecode_RoundTripsShowLayersPanel()
+    {
+        var original = new LaunchRequest { FilePath = @"C:\labels\a.label", ShowLayersPanel = false };
+
+        var ok = LaunchRequest.TryParse(original.ToCommandLineArguments().Split(' '), out var decoded);
+
+        Assert.True(ok);
+        Assert.Equal(original.ShowLayersPanel, decoded!.ShowLayersPanel);
+    }
+
+    [Fact]
+    public void ToCommandLineArguments_OmitsElementsFlagWhenNotSet()
+    {
+        var request = new LaunchRequest { FilePath = @"C:\labels\a.label" };
+
+        Assert.DoesNotContain("--elements", request.ToCommandLineArguments());
+    }
+
+    [Fact]
+    public void ToCommandLineArguments_OmitsElementsFlagWhenEmpty()
+    {
+        var request = new LaunchRequest { FilePath = @"C:\labels\a.label", AllowedElementKinds = [] };
+
+        Assert.DoesNotContain("--elements", request.ToCommandLineArguments());
+    }
+
+    [Fact]
+    public void ToCommandLineArguments_AppendsElementsAsCommaSeparatedList()
+    {
+        var request = new LaunchRequest { FilePath = @"C:\labels\a.label", AllowedElementKinds = ["Text", "Barcode", "QrCode"] };
+
+        Assert.Equal(@"--edit C:\labels\a.label --elements Text,Barcode,QrCode", request.ToCommandLineArguments());
+    }
+
+    [Fact]
+    public void ToCommandLineArguments_AppendsElementsAfterReadOnly()
+    {
+        var request = new LaunchRequest { FilePath = @"C:\labels\a.label", ReadOnly = true, AllowedElementKinds = ["Text"] };
+
+        Assert.Equal(@"--edit C:\labels\a.label --readonly --elements Text", request.ToCommandLineArguments());
+    }
+
+    [Fact]
+    public void TryParse_DecodesElementsFlag()
+    {
+        var ok = LaunchRequest.TryParse(["--edit", @"C:\labels\a.label", "--elements", "Text,Barcode,QrCode"], out var request);
+
+        Assert.True(ok);
+        Assert.Equal(new[] { "Text", "Barcode", "QrCode" }, request!.AllowedElementKinds);
+    }
+
+    [Fact]
+    public void TryParse_LeavesElementsNullWhenFlagAbsent()
+    {
+        var ok = LaunchRequest.TryParse(["--edit", @"C:\labels\a.label"], out var request);
+
+        Assert.True(ok);
+        Assert.Null(request!.AllowedElementKinds);
+    }
+
+    [Fact]
+    public void EncodeThenDecode_RoundTripsAllowedElementKinds()
+    {
+        var original = new LaunchRequest { FilePath = @"C:\labels\a.label", AllowedElementKinds = ["Text", "Barcode", "QrCode"] };
+
+        var ok = LaunchRequest.TryParse(original.ToCommandLineArguments().Split(' '), out var decoded);
+
+        Assert.True(ok);
+        Assert.Equal(original.AllowedElementKinds, decoded!.AllowedElementKinds);
+    }
+
+    [Fact]
     public void EncodeThenDecode_RoundTripsAPathWithSpaces()
     {
         // Simulates what actually happens end to end: ToCommandLineArguments() feeds

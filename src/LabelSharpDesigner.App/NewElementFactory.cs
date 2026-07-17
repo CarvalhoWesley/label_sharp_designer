@@ -4,7 +4,12 @@ using LabelSharpDesigner.Core.Styles;
 
 namespace LabelSharpDesigner.App;
 
-internal enum NewElementKind
+/// <summary>Every element type the "+ Adicionar" toolbar menu can offer. Public so a host application
+/// can restrict which ones <see cref="EditorForm"/>/<see cref="LibraryForm"/> shows (see their
+/// <c>allowedElementKinds</c> constructor parameter) — e.g. a host that only ever prints barcodes
+/// might only want <see cref="Text"/>, <see cref="Barcode"/> and <see cref="QrCode"/> offered, to keep
+/// the label designer focused on what its integration actually supports.</summary>
+public enum NewElementKind
 {
     Text,
     Rectangle,

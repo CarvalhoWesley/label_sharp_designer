@@ -54,10 +54,33 @@ internal static class Program
                 saved = true;
             };
 
-        using var editor = new EditorForm(document, onSave);
+        var allowedElementKinds = ParseAllowedElementKinds(request.AllowedElementKinds);
+
+        using var editor = new EditorForm(document, onSave, allowedElementKinds, request.ShowLayersPanel);
         Application.Run(editor);
 
         return saved ? LaunchOutcome.Saved : LaunchOutcome.Cancelled;
+    }
+
+    /// <summary>Maps <see cref="LaunchRequest.AllowedElementKinds"/>'s plain names (the only contract
+    /// <c>Legacy.Bridge</c> can share with a legacy caller, since it can't reference this assembly's
+    /// own <see cref="NewElementKind"/>) back to real enum values. A name the caller sends that this
+    /// version of the app doesn't recognize is silently dropped — never worth failing the whole editor
+    /// launch over one stale/misspelled entry.</summary>
+    private static IReadOnlyCollection<NewElementKind>? ParseAllowedElementKinds(IReadOnlyList<string>? names)
+    {
+        if (names is not { Count: > 0 })
+        {
+            return null;
+        }
+
+        var kinds = names
+            .Select(name => Enum.TryParse<NewElementKind>(name, ignoreCase: true, out var kind) ? kind : (NewElementKind?)null)
+            .Where(kind => kind is not null)
+            .Select(kind => kind!.Value)
+            .ToArray();
+
+        return kinds.Length > 0 ? kinds : null;
     }
 
     private static void RunLibraryMode()

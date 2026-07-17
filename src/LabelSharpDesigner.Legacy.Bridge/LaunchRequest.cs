@@ -2,18 +2,37 @@ namespace LabelSharpDesigner.Legacy.Bridge;
 
 /// <summary>
 /// What the legacy ASP.NET Framework app asks the satellite <c>LabelSharpDesigner.App</c> process to
-/// do: open the editor over a specific <c>.label</c> file, optionally read-only. Encoded/decoded as
-/// the command line <c>--edit &lt;path&gt; [--readonly]</c>, so <see cref="ToCommandLineArguments"/>
-/// (legacy side, building the process to launch) and <see cref="TryParse"/> (satellite side, decoding
-/// its own <c>Main(string[] args)</c>) must stay symmetric.
+/// do: open the editor over a specific <c>.label</c> file, optionally read-only, optionally restricted
+/// to a subset of the "+ Adicionar" element types, optionally without the layers sidebar. Encoded/
+/// decoded as the command line
+/// <c>--edit &lt;path&gt; [--readonly] [--hide-layers-panel] [--elements &lt;comma-separated names&gt;]</c>,
+/// so <see cref="ToCommandLineArguments"/> (legacy side, building the process to launch) and
+/// <see cref="TryParse"/> (satellite side, decoding its own <c>Main(string[] args)</c>) must stay
+/// symmetric.
 /// </summary>
 public sealed record LaunchRequest
 {
     public const string EditFlag = "--edit";
     public const string ReadOnlyFlag = "--readonly";
+    public const string ElementsFlag = "--elements";
+    public const string HideLayersPanelFlag = "--hide-layers-panel";
 
     public required string FilePath { get; init; }
     public bool ReadOnly { get; init; }
+
+    /// <summary>Which element types the editor's "+ Adicionar" menu offers, by
+    /// <c>NewElementKind.ToString()</c> name (e.g. <c>"Text"</c>, <c>"Barcode"</c>, <c>"QrCode"</c>) —
+    /// this project can't reference <c>LabelSharpDesigner.App</c>'s actual enum (wrong dependency
+    /// direction: <c>App</c> already depends on this project), so names are the shared contract
+    /// instead. <see langword="null"/> or empty (the default) offers every element type; the satellite
+    /// process silently ignores any name it doesn't recognize rather than failing the whole launch.</summary>
+    public IReadOnlyList<string>? AllowedElementKinds { get; init; }
+
+    /// <summary>Whether the editor's layers sidebar is offered at all — <see langword="true"/> (the
+    /// default, and the wire absence of <see cref="HideLayersPanelFlag"/>) matches today's behavior,
+    /// where the end user can still show/hide it themselves; <see langword="false"/> means the
+    /// satellite never builds the panel, regardless of that end-user preference.</summary>
+    public bool ShowLayersPanel { get; init; } = true;
 
     /// <summary>Builds the single, properly quoted argument string for
     /// <see cref="System.Diagnostics.ProcessStartInfo.Arguments"/> — <c>ArgumentList</c> isn't
@@ -29,12 +48,23 @@ public sealed record LaunchRequest
             parts.Add(ReadOnlyFlag);
         }
 
+        if (!ShowLayersPanel)
+        {
+            parts.Add(HideLayersPanelFlag);
+        }
+
+        if (AllowedElementKinds is { Count: > 0 })
+        {
+            parts.Add(ElementsFlag);
+            parts.Add(EscapeArgument(string.Join(",", AllowedElementKinds)));
+        }
+
         return string.Join(" ", parts);
     }
 
-    /// <summary>Decodes <c>--edit &lt;path&gt; [--readonly]</c> from an already-split argv (i.e. what
-    /// the satellite process's own <c>Main(string[] args)</c> receives — no unescaping needed here,
-    /// the runtime already did it).</summary>
+    /// <summary>Decodes <c>--edit &lt;path&gt; [--readonly] [--hide-layers-panel] [--elements &lt;names&gt;]</c>
+    /// from an already-split argv (i.e. what the satellite process's own <c>Main(string[] args)</c>
+    /// receives — no unescaping needed here, the runtime already did it).</summary>
     public static bool TryParse(string[] args, out LaunchRequest? request)
     {
         request = null;
@@ -51,15 +81,26 @@ public sealed record LaunchRequest
         }
 
         var readOnly = false;
+        var showLayersPanel = true;
+        IReadOnlyList<string>? allowedElementKinds = null;
         for (var i = 2; i < args.Length; i++)
         {
             if (string.Equals(args[i], ReadOnlyFlag, StringComparison.Ordinal))
             {
                 readOnly = true;
             }
+            else if (string.Equals(args[i], HideLayersPanelFlag, StringComparison.Ordinal))
+            {
+                showLayersPanel = false;
+            }
+            else if (string.Equals(args[i], ElementsFlag, StringComparison.Ordinal) && i + 1 < args.Length)
+            {
+                allowedElementKinds = args[i + 1].Split(',');
+                i++;
+            }
         }
 
-        request = new LaunchRequest { FilePath = filePath, ReadOnly = readOnly };
+        request = new LaunchRequest { FilePath = filePath, ReadOnly = readOnly, AllowedElementKinds = allowedElementKinds, ShowLayersPanel = showLayersPanel };
         return true;
     }
 

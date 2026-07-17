@@ -133,7 +133,13 @@ public sealed class LabelListForm : Form
         try
         {
             var launcher = new LegacyLauncher(exePath);
-            result = launcher.Launch(new LaunchRequest { FilePath = entry.FilePath });
+            var editorSettings = EditorLauncherSettingsStore.Load();
+            result = launcher.Launch(new LaunchRequest
+            {
+                FilePath = entry.FilePath,
+                AllowedElementKinds = editorSettings.AllowedElementKinds,
+                ShowLayersPanel = editorSettings.ShowLayersPanel,
+            });
         }
         catch (Exception ex)
         {

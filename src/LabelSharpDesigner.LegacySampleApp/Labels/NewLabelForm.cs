@@ -26,11 +26,12 @@ public sealed class NewLabelForm : Form
         MinimizeBox = false;
 
         var content = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12) };
-        var top = 0;
+        var left = content.Padding.Left;
+        var top = content.Padding.Top;
 
         Label AddLabel(string text)
         {
-            var label = new Label { Text = text, Left = 0, Top = top, Width = 320, Height = 18 };
+            var label = new Label { Text = text, Left = left, Top = top, Width = 320, Height = 18 };
             content.Controls.Add(label);
             top += 20;
             return label;
@@ -39,27 +40,27 @@ public sealed class NewLabelForm : Form
         var defaultPage = LabelRepository.DefaultPage;
 
         AddLabel("Nome");
-        _nameBox = new TextBox { Left = 0, Top = top, Width = 320, Text = "Nova etiqueta" };
+        _nameBox = new TextBox { Left = left, Top = top, Width = 320, Text = "Nova etiqueta" };
         content.Controls.Add(_nameBox);
         top += 34;
 
         AddLabel("Largura (mm)");
-        _widthUpDown = new NumericUpDown { Left = 0, Top = top, Width = 100, Minimum = 5, Maximum = 500, DecimalPlaces = 1, Value = (decimal)defaultPage.WidthMm };
+        _widthUpDown = new NumericUpDown { Left = left, Top = top, Width = 100, Minimum = 5, Maximum = 500, DecimalPlaces = 1, Value = (decimal)defaultPage.WidthMm };
         content.Controls.Add(_widthUpDown);
         top += 34;
 
         AddLabel("Altura (mm)");
-        _heightUpDown = new NumericUpDown { Left = 0, Top = top, Width = 100, Minimum = 5, Maximum = 500, DecimalPlaces = 1, Value = (decimal)defaultPage.HeightMm };
+        _heightUpDown = new NumericUpDown { Left = left, Top = top, Width = 100, Minimum = 5, Maximum = 500, DecimalPlaces = 1, Value = (decimal)defaultPage.HeightMm };
         content.Controls.Add(_heightUpDown);
         top += 34;
 
         AddLabel("DPI");
-        _dpiUpDown = new NumericUpDown { Left = 0, Top = top, Width = 100, Minimum = 72, Maximum = 1200, Value = defaultPage.Dpi };
+        _dpiUpDown = new NumericUpDown { Left = left, Top = top, Width = 100, Minimum = 72, Maximum = 1200, Value = defaultPage.Dpi };
         content.Controls.Add(_dpiUpDown);
         top += 34;
 
         AddLabel("Colunas (etiquetas por fileira)");
-        _columnsUpDown = new NumericUpDown { Left = 0, Top = top, Width = 100, Minimum = 1, Maximum = 99, Value = defaultPage.Columns };
+        _columnsUpDown = new NumericUpDown { Left = left, Top = top, Width = 100, Minimum = 1, Maximum = 99, Value = defaultPage.Columns };
         content.Controls.Add(_columnsUpDown);
         top += 34;
 

@@ -100,6 +100,7 @@ public sealed class PrintDialogForm : Form
         var leftPanel = new Panel { Dock = DockStyle.Left, Width = 340 };
         _leftContent = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(12) };
         leftPanel.Controls.Add(_leftContent);
+        _top = _leftContent.Padding.Top;
 
         _preview = new RenderPreviewControl { Dock = DockStyle.Fill };
         var rightPanel = new Panel { Dock = DockStyle.Fill };
@@ -110,7 +111,7 @@ public sealed class PrintDialogForm : Form
         Controls.Add(buttonPanel);
 
         AddLabel("Impressora");
-        _printerCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Top = _top };
+        _printerCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Left = _leftContent.Padding.Left, Top = _top };
         _printerCombo.Items.Add("(Impressora padrão do sistema)");
         foreach (var printer in new WindowsPrinterDiscovery().ListAvailable())
         {
@@ -127,7 +128,7 @@ public sealed class PrintDialogForm : Form
         _top += 30;
 
         AddLabel("Formato");
-        _formatCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Top = _top };
+        _formatCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Left = _leftContent.Padding.Left, Top = _top };
         _formatCombo.Items.AddRange(["PDF (via driver, qualquer impressora)", "PPLA nativo (Argox)", "PPLA raster (Argox — texto/imagem/QR)"]);
         _formatCombo.SelectedIndexChanged += (_, _) => RebuildForFormat();
         _leftContent.Controls.Add(_formatCombo);
@@ -137,7 +138,7 @@ public sealed class PrintDialogForm : Form
         // enough for the largest case (PPLA raster: darkness/copies/transfer type + 3 checkboxes) so
         // its position never shifts when the format changes, keeping the sample-data section below it
         // at a stable Top regardless of how many format-specific controls are currently shown.
-        _formatOptionsPanel = new Panel { Left = 0, Top = _top, Width = 300, Height = FormatOptionsHeight };
+        _formatOptionsPanel = new Panel { Left = _leftContent.Padding.Left, Top = _top, Width = 300, Height = FormatOptionsHeight };
         _leftContent.Controls.Add(_formatOptionsPanel);
         _top += FormatOptionsHeight + 10;
 
@@ -150,7 +151,7 @@ public sealed class PrintDialogForm : Form
             Maximum = _isBatchMode ? 999 : 99,
             Value = Math.Clamp(_lastSettings.Quantity, 1, _isBatchMode ? 999 : 99),
             Width = 100,
-            Left = 0,
+            Left = _leftContent.Padding.Left,
             Top = _top,
         };
         _quantityUpDown.ValueChanged += (_, _) => UpdatePreview();
@@ -162,7 +163,7 @@ public sealed class PrintDialogForm : Form
             _perLabelCheckBox = new CheckBox
             {
                 Text = "Um valor diferente por etiqueta",
-                Left = 0,
+                Left = _leftContent.Padding.Left,
                 Top = _top,
                 Width = 300,
             };
@@ -178,7 +179,7 @@ public sealed class PrintDialogForm : Form
         // Fixed-size placeholder, same reserved-space trick as _formatOptionsPanel below: holds either
         // the shared "Dados de amostra" fields or (per-label mode) the records grid, rebuilt in place
         // by RebuildRecordsArea whenever _perLabelCheckBox flips, without reflowing anything above it.
-        _recordsAreaPanel = new Panel { Left = 0, Top = _top, Width = 300, Height = RecordsAreaHeight };
+        _recordsAreaPanel = new Panel { Left = _leftContent.Padding.Left, Top = _top, Width = 300, Height = RecordsAreaHeight };
         _leftContent.Controls.Add(_recordsAreaPanel);
         _top += RecordsAreaHeight + 10;
         RebuildRecordsArea();
@@ -189,7 +190,7 @@ public sealed class PrintDialogForm : Form
 
     private Label AddLabel(string text)
     {
-        var label = new Label { Text = text, Left = 0, Top = _top, Width = 300, Height = 18 };
+        var label = new Label { Text = text, Left = _leftContent.Padding.Left, Top = _top, Width = 300, Height = 18 };
         _leftContent.Controls.Add(label);
         _top += 20;
         return label;

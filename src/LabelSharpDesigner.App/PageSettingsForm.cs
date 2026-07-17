@@ -32,14 +32,15 @@ public sealed class PageSettingsForm : Form
         MinimizeBox = false;
 
         var content = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12), AutoScroll = true };
-        var top = 0;
+        var left = content.Padding.Left;
+        var top = content.Padding.Top;
 
-        _widthMm = AddNumeric(content, ref top, "Largura (mm)", (decimal)page.WidthMm, 1, 1000, 1);
-        _heightMm = AddNumeric(content, ref top, "Altura (mm)", (decimal)page.HeightMm, 1, 1000, 1);
-        _dpi = AddNumeric(content, ref top, "DPI", page.Dpi, 72, 1200, 0);
+        _widthMm = AddNumeric(content, left, ref top, "Largura (mm)", (decimal)page.WidthMm, 1, 1000, 1);
+        _heightMm = AddNumeric(content, left, ref top, "Altura (mm)", (decimal)page.HeightMm, 1, 1000, 1);
+        _dpi = AddNumeric(content, left, ref top, "DPI", page.Dpi, 72, 1200, 0);
 
-        AddLabel(content, ref top, "Orientação");
-        _orientation = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = 0, Top = top, Width = 300 };
+        AddLabel(content, left, ref top, "Orientação");
+        _orientation = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = left, Top = top, Width = 300 };
         _orientation.Items.AddRange(["Retrato", "Paisagem"]);
         _orientation.SelectedIndex = page.Orientation == PageOrientation.Landscape ? 1 : 0;
         content.Controls.Add(_orientation);
@@ -52,16 +53,16 @@ public sealed class PageSettingsForm : Form
         // the original values.
         _orientation.SelectedIndexChanged += (_, _) => (_widthMm.Value, _heightMm.Value) = (_heightMm.Value, _widthMm.Value);
 
-        AddLabel(content, ref top, "Margens (mm)");
+        AddLabel(content, left, ref top, "Margens (mm)");
         var marginsRow = top;
-        _marginTop = AddNumericInline(content, 0, marginsRow, "Cima", (decimal)page.Margins.Top);
-        _marginRight = AddNumericInline(content, 75, marginsRow, "Direita", (decimal)page.Margins.Right);
-        _marginBottom = AddNumericInline(content, 150, marginsRow, "Baixo", (decimal)page.Margins.Bottom);
-        _marginLeft = AddNumericInline(content, 225, marginsRow, "Esquerda", (decimal)page.Margins.Left);
+        _marginTop = AddNumericInline(content, left, marginsRow, "Cima", (decimal)page.Margins.Top);
+        _marginRight = AddNumericInline(content, left + 75, marginsRow, "Direita", (decimal)page.Margins.Right);
+        _marginBottom = AddNumericInline(content, left + 150, marginsRow, "Baixo", (decimal)page.Margins.Bottom);
+        _marginLeft = AddNumericInline(content, left + 225, marginsRow, "Esquerda", (decimal)page.Margins.Left);
         top += 46;
 
-        _columns = AddNumeric(content, ref top, "Colunas", page.Columns, 1, 20, 0);
-        _columnGapMm = AddNumeric(content, ref top, "Espaço entre colunas (mm)", (decimal)page.ColumnGapMm, 0, 100, 1);
+        _columns = AddNumeric(content, left, ref top, "Colunas", page.Columns, 1, 20, 0);
+        _columnGapMm = AddNumeric(content, left, ref top, "Espaço entre colunas (mm)", (decimal)page.ColumnGapMm, 0, 100, 1);
 
         var buttonPanel = new FlowLayoutPanel
         {
@@ -84,18 +85,18 @@ public sealed class PageSettingsForm : Form
         CancelButton = cancelButton;
     }
 
-    private static void AddLabel(Control parent, ref int top, string text)
+    private static void AddLabel(Control parent, int left, ref int top, string text)
     {
-        parent.Controls.Add(new Label { Text = text, Left = 0, Top = top, Width = 300, Height = 18 });
+        parent.Controls.Add(new Label { Text = text, Left = left, Top = top, Width = 300, Height = 18 });
         top += 20;
     }
 
-    private static NumericUpDown AddNumeric(Control parent, ref int top, string label, decimal value, decimal min, decimal max, int decimals)
+    private static NumericUpDown AddNumeric(Control parent, int left, ref int top, string label, decimal value, decimal min, decimal max, int decimals)
     {
-        AddLabel(parent, ref top, label);
+        AddLabel(parent, left, ref top, label);
         var field = new NumericUpDown
         {
-            Left = 0,
+            Left = left,
             Top = top,
             Width = 300,
             Minimum = min,
