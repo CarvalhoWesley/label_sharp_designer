@@ -27,8 +27,7 @@ internal static class Program
     /// </summary>
     private static LaunchOutcome RunEditMode(LaunchRequest request)
     {
-        ApplicationConfiguration.Initialize();
-        Application.SetColorMode(SystemColorMode.System);
+        InitializeApplication();
 
         LabelDocument document;
         try
@@ -87,8 +86,8 @@ internal static class Program
     {
         var repository = LibraryRepository.Open();
         var themeMode = AppThemeMode.System;
-        ApplicationConfiguration.Initialize();
-        Application.SetColorMode(themeMode.ToSystemColorMode());
+        InitializeApplication();
+        ApplyThemeMode(themeMode);
 
         // A theme switch can't be repainted live onto controls already on screen (verified: the title
         // bar and owner-drawn controls stay stuck in their original mode), so switching themes means
@@ -105,7 +104,32 @@ internal static class Program
             }
 
             themeMode = requested;
-            Application.SetColorMode(themeMode.ToSystemColorMode());
+            ApplyThemeMode(themeMode);
         }
+    }
+
+    /// <summary>WinForms bootstrap — visual styles, text rendering, high-DPI mode. .NET 9 gets this
+    /// for free from the SDK-generated <c>ApplicationConfiguration.Initialize()</c>; net48 has no such
+    /// generator, so it's done by hand with the pre-.NET-6 API.</summary>
+    private static void InitializeApplication()
+    {
+#if NET9_0_OR_GREATER
+        ApplicationConfiguration.Initialize();
+#else
+        // High-DPI mode on net48 comes from app.config's <System.Windows.Forms.ApplicationConfigurationSection>
+        // (DpiAwareness=PerMonitorV2) instead of the SDK-generated call net9 gets — see App.config.
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
+#endif
+    }
+
+    /// <summary>System dark-mode theming (<c>Application.SetColorMode</c>) is a .NET 9+ WinForms API
+    /// with no net48 equivalent — net48 always renders in the OS's classic light theme regardless of
+    /// <paramref name="mode"/>.</summary>
+    private static void ApplyThemeMode(AppThemeMode mode)
+    {
+#if NET9_0_OR_GREATER
+        Application.SetColorMode(mode.ToSystemColorMode());
+#endif
     }
 }

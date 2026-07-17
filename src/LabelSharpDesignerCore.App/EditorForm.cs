@@ -3,6 +3,7 @@ using LabelSharpDesignerCore.Core.Document;
 using LabelSharpDesignerCore.Core.Elements;
 using LabelSharpDesignerCore.Core.Geometry;
 using LabelSharpDesignerCore.Core.Layout;
+using LabelSharpDesignerCore.App.Compat;
 using LabelSharpDesignerCore.Layout;
 using LabelSharpDesignerCore.UI.WinForms.Canvas;
 using LabelSharpDesignerCore.UI.WinForms.Panels;
@@ -395,7 +396,7 @@ public sealed class EditorForm : Form
         }
 
         var addButton = new ToolStripDropDownButton("+ Adicionar");
-        foreach (var kind in _allowedElementKinds ?? (IReadOnlyCollection<NewElementKind>)Enum.GetValues<NewElementKind>())
+        foreach (var kind in _allowedElementKinds ?? (IReadOnlyCollection<NewElementKind>)(NewElementKind[])Enum.GetValues(typeof(NewElementKind)))
         {
             var item = new ToolStripMenuItem(NewElementFactory.Label(kind));
             item.Click += (_, _) => AddElement(kind);
@@ -576,12 +577,12 @@ public sealed class EditorForm : Form
         // Don't clobber a value the user is actively typing into.
         if (!_positionXField.Focused)
         {
-            _positionXField.Value = Math.Clamp((decimal)position.X, _positionXField.Minimum, _positionXField.Maximum);
+            _positionXField.Value = MathCompat.Clamp((decimal)position.X, _positionXField.Minimum, _positionXField.Maximum);
         }
 
         if (!_positionYField.Focused)
         {
-            _positionYField.Value = Math.Clamp((decimal)position.Y, _positionYField.Minimum, _positionYField.Maximum);
+            _positionYField.Value = MathCompat.Clamp((decimal)position.Y, _positionYField.Minimum, _positionYField.Maximum);
         }
 
         _suppressGeometryFieldEvents = false;

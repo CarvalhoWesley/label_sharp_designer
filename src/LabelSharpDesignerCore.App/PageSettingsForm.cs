@@ -1,3 +1,4 @@
+using LabelSharpDesignerCore.App.Compat;
 using LabelSharpDesignerCore.Core.Document;
 
 namespace LabelSharpDesignerCore.App;
@@ -103,7 +104,7 @@ public sealed class PageSettingsForm : Form
             Maximum = max,
             DecimalPlaces = decimals,
             Increment = decimals > 0 ? 0.5m : 1m,
-            Value = Math.Clamp(value, min, max),
+            Value = MathCompat.Clamp(value, min, max),
         };
         parent.Controls.Add(field);
         top += 34;
@@ -122,7 +123,7 @@ public sealed class PageSettingsForm : Form
             Maximum = 100,
             DecimalPlaces = 1,
             Increment = 0.5m,
-            Value = Math.Clamp(value, 0, 100),
+            Value = MathCompat.Clamp(value, 0, 100),
         };
         parent.Controls.Add(field);
         return field;

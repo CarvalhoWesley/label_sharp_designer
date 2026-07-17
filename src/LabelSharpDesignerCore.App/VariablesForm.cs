@@ -95,7 +95,7 @@ public sealed class VariablesForm : Form
             Name = "Type",
             HeaderText = "Tipo",
             DataPropertyName = "Type",
-            DataSource = Enum.GetValues<VariableValueType>(),
+            DataSource = (VariableValueType[])Enum.GetValues(typeof(VariableValueType)),
             FillWeight = 90,
         });
         grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "DefaultValue", HeaderText = "Valor padrão", DataPropertyName = "DefaultValue", FillWeight = 110 });

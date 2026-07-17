@@ -2,9 +2,11 @@
 
 LabelSharpDesignerCore é uma recriação em .NET 9 / C# / WinForms do produto Flutter
 `flutter_label_designer`: um editor de etiquetas (documento → elementos →
-layout → renderização → impressão), pensado para ser referenciado por uma
-solução legada ASP.NET Framework 4.x como um app satélite (ver
-[§7 Legacy.Bridge](#7-integração-com-o-legado--labelsharpdesignerlegacybridge)).
+layout → renderização → impressão). `UI.WinForms`, `App` e
+`PrintTransport.Windows` multi-targetam `net48;net9.0-windows(...)`, então
+tanto uma aplicação .NET moderna quanto uma .NET Framework 4.6.1+ referenciam
+os projetos diretamente, no mesmo processo (ver
+[§7 integração com hosts .NET Framework](#7-integração-com-hosts-net-framework-4x)).
 
 A regra estrutural mais importante do repositório: **só o `LayoutEngine`
 resolve um documento** (mm → dots, `{{ }}` avaliados, z-order, rotação
@@ -82,16 +84,18 @@ não o canvas.
 | `LabelSharpDesignerCore.Rendering.Png` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Rendering.Canvas` | `PngExporter` — `Rendering.Canvas` para um `SKBitmap` em 1×/2×/3× ou largura customizada. |
 | `LabelSharpDesignerCore.Rendering.Pdf` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Barcode` | `PdfExporter` (PdfSharp) — texto vetorial real via `XGraphics`/`XFont`, com quebra de linha própria (não compartilha código com `Rendering.Canvas`, ver [§8](#8-convenções-e-pegadinhas)). |
 | `LabelSharpDesignerCore.Rendering.ArgoxPpla` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Rendering.Canvas`, `Barcode` | `PplaCommandBuilder` (comandos PPLA nativos por elemento) e `PplaRasterBuilder` (rasteriza via `Rendering.Canvas` e envia como imagem monocromática) para impressoras térmicas Argox. |
-| `LabelSharpDesignerCore.PrintTransport.Windows` | `net9.0-windows` | — | Envio de bytes para a impressora: `WindowsRawPrintTransport` (P/Invoke em `winspool.drv`, equivalente ao `RawPrinterHelper` clássico) para PPLA cru, `WindowsPdfPrintTransport` para PDF via driver, `WindowsPrinterDiscovery`. |
-| `LabelSharpDesignerCore.UI.WinForms` | `net9.0-windows10.0.19041.0` | `Core`, `Layout`, `Expressions`, `History`, `Rendering.Canvas` | `LabelCanvasControl` (superfície interativa), `PropertyPanel`, `LayersPanel`, `RulerControl`, `AlignmentSnap`. |
-| `LabelSharpDesignerCore.App` | `net9.0-windows10.0.19041.0` (`WinExe`) | quase todos os projetos acima + `Legacy.Bridge` | Composition root: `Program.cs`, `LibraryForm`, `EditorForm`, `ExportDialogForm`, `PrintDialogForm`, `PageSettingsForm`, `LibraryRepository`, configurações de app (`PrintSettings*`, `EditorLayoutSettings*`). |
-| `LabelSharpDesignerCore.Legacy.Bridge` | `netstandard2.0;net9.0` | — | DTOs `LaunchRequest`/`LaunchResult`/`LaunchOutcome` e `LegacyLauncher`, o contrato usado pelo ASP.NET Framework legado para iniciar o `App` como processo satélite (ver [§7](#7-integração-com-o-legado--labelsharpdesignerlegacybridge)). |
+| `LabelSharpDesignerCore.PrintTransport.Windows` | `net48;net9.0-windows` | — | Envio de bytes para a impressora: `WindowsRawPrintTransport` (P/Invoke em `winspool.drv`, equivalente ao `RawPrinterHelper` clássico) para PPLA cru, `WindowsPdfPrintTransport` para PDF via driver, `WindowsPrinterDiscovery`. |
+| `LabelSharpDesignerCore.UI.WinForms` | `net48;net9.0-windows10.0.19041.0` | `Core`, `Layout`, `Expressions`, `History`, `Rendering.Canvas` | `LabelCanvasControl` (superfície interativa), `PropertyPanel`, `LayersPanel`, `RulerControl`, `AlignmentSnap`. |
+| `LabelSharpDesignerCore.App` | `net48;net9.0-windows10.0.19041.0` (`WinExe`) | quase todos os projetos acima | Composition root: `Program.cs`, `LibraryForm`, `EditorForm`, `ExportDialogForm`, `PrintDialogForm`, `PageSettingsForm`, `LibraryRepository`, configurações de app (`PrintSettings*`, `EditorLayoutSettings*`). |
+| `LabelSharpDesignerCore.Legacy.Bridge` | `netstandard2.0;net9.0` | — | DTOs `LaunchRequest`/`LaunchResult`/`LaunchOutcome` e `LegacyLauncher` — mecanismo opcional para iniciar o `App` como processo satélite, hoje relevante só para hosts web sem sessão de desktop interativa (ver [§7](#7-integração-com-hosts-net-framework-4x)). |
 
-Todo projeto de domínio/lógica multi-targeta `netstandard2.0;net9.0` — isso é
-o que permite o legado ASP.NET Framework 4.x referenciar `Core`,
-`Serialization`, `Layout` etc. diretamente (mesmo processo), enquanto só o
-`App` satélite (WinForms, `net9.0-windows`) roda como processo separado via
-`Legacy.Bridge`.
+Todo projeto de domínio/lógica multi-targeta `netstandard2.0;net9.0`, e
+`UI.WinForms`/`App`/`PrintTransport.Windows` multi-targetam
+`net48;net9.0-windows(...)` — isso é o que permite tanto uma aplicação .NET
+moderna quanto uma .NET Framework 4.6.1+ referenciar qualquer projeto do
+repositório diretamente, no mesmo processo (ver [INTEGRATION.md](INTEGRATION.md)).
+`Legacy.Bridge` fica disponível como mecanismo opcional para os casos em que
+isso não é possível (host web sem sessão de desktop interativa — ver §7).
 
 `Directory.Build.props` na raiz fixa `LangVersion=latest`,
 `Nullable=enable`, `ImplicitUsings=enable`, e `TreatWarningsAsErrors=true`
@@ -186,27 +190,57 @@ Flutter original controle a controle.
   layout foge das capacidades nativas do firmware PPLA.
 - **PNG**: `Rendering.Png.PngExporter`, 1×/2×/3× ou largura customizada.
 
-## 7. Integração com o legado — `LabelSharpDesignerCore.Legacy.Bridge`
+## 7. Integração com hosts .NET Framework 4.x
 
-O app legado ASP.NET Framework 4.x não pode referenciar o `App` WinForms
-`net9.0-windows` diretamente (frameworks incompatíveis), então a integração é
-via processo satélite:
+`UI.WinForms`, `App` e `PrintTransport.Windows` multi-targetam
+`net48;net9.0-windows(...)` — um host .NET Framework 4.6.1+ referencia `App`
+(e o que mais precisar) diretamente, no mesmo processo, exatamente como um
+host .NET moderno faz. Não há mais nenhuma incompatibilidade de runtime a
+contornar; ver [INTEGRATION.md](INTEGRATION.md) para o guia completo e
+[GUIA_RAPIDO_FRAMEWORK.md](GUIA_RAPIDO_FRAMEWORK.md) para o passo a passo
+curto.
 
-1. O legado referencia `Legacy.Bridge` (`netstandard2.0`, compatível com
+A única diferença de comportamento entre as duas pernas é o tema escuro
+(`Application.SetColorMode`/`SystemColorMode`), uma API exclusiva do WinForms
+.NET 9+ sem equivalente no .NET Framework — a perna `net48` sempre roda no
+tema claro clássico do Windows (`AppThemeModeExtensions.ToSystemColorMode` e
+as chamadas a `Application.SetColorMode` em `Program.cs` são compiladas só
+sob `#if NET9_0_OR_GREATER`).
+
+`Program.Main` continua com os mesmos dois modos de execução, disponíveis
+nas duas pernas:
+
+- **Modo biblioteca** (sem argumentos) — abre a `LibraryForm` sobre um
+  `LibraryRepository` (`%APPDATA%\LabelSharpDesignerCore\Labels`).
+- **Modo edição direta** (`--edit <caminho> [--readonly]`) — abre o
+  `EditorForm` direto sobre um arquivo específico, ignorando a biblioteca
+  inteira (`LaunchRequest.TryParse` reconhece esses argumentos).
+
+### Quando ainda faz sentido usar `LabelSharpDesignerCore.Legacy.Bridge`
+
+Referenciar `App` direto exige uma **sessão de desktop interativa** — WinForms
+não abre uma janela de verdade para um worker process do IIS de produção
+(Session 0, isolada de qualquer desktop desde o Vista/Server 2008). Se o seu
+host é um site ASP.NET Framework atendendo clientes remotos pela internet (e
+não, por exemplo, um IIS Express local rodando como o próprio usuário), abrir
+`EditorForm` em processo não funciona de qualquer forma — nem referenciando
+`App` direto, nem via processo satélite.
+
+`Legacy.Bridge` continua existindo para o único cenário intermediário em que
+processo satélite ainda ajuda: isolar o editor do processo hospedeiro por
+outros motivos (ex.: crash do editor não deve derrubar o host), mantendo
+"o servidor" na prática como a própria máquina do usuário. O contrato:
+
+1. O host referencia `Legacy.Bridge` (`netstandard2.0`, compatível com
    Framework 4.x) e usa `LegacyLauncher` para montar um `Process.Start` do
    `LabelSharpDesignerCore.App.exe` com `--edit <path> [--readonly]`.
 2. `Program.Main` detecta esses argumentos via `LaunchRequest.TryParse` e
-   entra em **modo de edição direta** (`RunEditMode`): abre o `EditorForm`
-   sobre aquele arquivo, ignorando a biblioteca inteira.
+   entra em modo de edição direta (`RunEditMode`).
 3. O código de saída do processo é o contrato de retorno
-   (`LaunchOutcome`: `Saved`/`Cancelled`/`Error`) que o legado lê depois do
+   (`LaunchOutcome`: `Saved`/`Cancelled`/`Error`) que o host lê depois do
    `Process.Start` terminar.
 
-Sem argumentos, `Program.Main` entra em **modo biblioteca**
-(`RunLibraryMode`): abre `LibraryForm` sobre `LibraryRepository`
-(`%APPDATA%\LabelSharpDesignerCore\Labels`), com troca de tema
-claro/escuro/sistema reabrindo a janela (repintar tema ao vivo não funciona
-de forma confiável em controles WinForms já na tela).
+Fora desse cenário específico, prefira a referência direta.
 
 ## 8. Convenções e pegadinhas
 

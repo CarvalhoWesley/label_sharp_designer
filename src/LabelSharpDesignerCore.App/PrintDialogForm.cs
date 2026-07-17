@@ -1,4 +1,5 @@
 using System.Globalization;
+using LabelSharpDesignerCore.App.Compat;
 using LabelSharpDesignerCore.Core.Document;
 using LabelSharpDesignerCore.Core.Layout;
 using LabelSharpDesignerCore.Layout;
@@ -149,7 +150,7 @@ public sealed class PrintDialogForm : Form
         {
             Minimum = 1,
             Maximum = _isBatchMode ? 999 : 99,
-            Value = Math.Clamp(_lastSettings.Quantity, 1, _isBatchMode ? 999 : 99),
+            Value = MathCompat.Clamp(_lastSettings.Quantity, 1, _isBatchMode ? 999 : 99),
             Width = 100,
             Left = _leftContent.Padding.Left,
             Top = _top,
@@ -359,7 +360,7 @@ public sealed class PrintDialogForm : Form
             case PrintFormat.PplaNative:
             case PrintFormat.PplaRaster:
                 AddLocalLabel("Escurecimento (2-20)");
-                _darknessUpDown = new NumericUpDown { Minimum = 2, Maximum = 20, Value = Math.Clamp(_lastSettings.Darkness, 2, 20), Width = 80, Top = localTop };
+                _darknessUpDown = new NumericUpDown { Minimum = 2, Maximum = 20, Value = MathCompat.Clamp(_lastSettings.Darkness, 2, 20), Width = 80, Top = localTop };
                 _formatOptionsPanel.Controls.Add(_darknessUpDown);
                 localTop += 30;
 
@@ -381,15 +382,15 @@ public sealed class PrintDialogForm : Form
                 // exposed here, so it silently stayed at 0 (no correction) for every print.
                 AddLocalLabel("Deslocamento de impressão (mm)");
                 _formatOptionsPanel.Controls.Add(new Label { Text = "X", Left = 0, Top = localTop + 3, Width = 16, Height = 16 });
-                _offsetXUpDown = new NumericUpDown { Left = 18, Top = localTop, Width = 110, Minimum = -100, Maximum = 100, DecimalPlaces = 1, Increment = 0.5m, Value = Math.Clamp((decimal)_lastSettings.OffsetXMm, -100, 100) };
+                _offsetXUpDown = new NumericUpDown { Left = 18, Top = localTop, Width = 110, Minimum = -100, Maximum = 100, DecimalPlaces = 1, Increment = 0.5m, Value = MathCompat.Clamp((decimal)_lastSettings.OffsetXMm, -100, 100) };
                 _formatOptionsPanel.Controls.Add(_offsetXUpDown);
                 _formatOptionsPanel.Controls.Add(new Label { Text = "Y", Left = 150, Top = localTop + 3, Width = 16, Height = 16 });
-                _offsetYUpDown = new NumericUpDown { Left = 168, Top = localTop, Width = 110, Minimum = -100, Maximum = 100, DecimalPlaces = 1, Increment = 0.5m, Value = Math.Clamp((decimal)_lastSettings.OffsetYMm, -100, 100) };
+                _offsetYUpDown = new NumericUpDown { Left = 168, Top = localTop, Width = 110, Minimum = -100, Maximum = 100, DecimalPlaces = 1, Increment = 0.5m, Value = MathCompat.Clamp((decimal)_lastSettings.OffsetYMm, -100, 100) };
                 _formatOptionsPanel.Controls.Add(_offsetYUpDown);
                 localTop += 30;
 
                 AddLocalLabel("Avanço de papel (mm)");
-                _feedOffsetUpDown = new NumericUpDown { Left = 0, Top = localTop, Width = 110, Minimum = -200, Maximum = 200, DecimalPlaces = 1, Increment = 0.5m, Value = Math.Clamp((decimal)_lastSettings.FeedOffsetMm, -200, 200) };
+                _feedOffsetUpDown = new NumericUpDown { Left = 0, Top = localTop, Width = 110, Minimum = -200, Maximum = 200, DecimalPlaces = 1, Increment = 0.5m, Value = MathCompat.Clamp((decimal)_lastSettings.FeedOffsetMm, -200, 200) };
                 _formatOptionsPanel.Controls.Add(_feedOffsetUpDown);
                 localTop += 30;
                 _formatOptionsPanel.Controls.Add(new Label

@@ -1,174 +1,162 @@
 # Guia rápido — editor de etiquetas para aplicação .NET Framework 4.x
 
-Versão enxuta de [INTEGRATION.md §3](INTEGRATION.md#3-caminho-b--aplicação-legada-aspnet-framework--net-framework-4x)
+Versão enxuta de [INTEGRATION.md §1](INTEGRATION.md#1-como-referenciar-os-projetos)
 com só o essencial: **implementar o editor**, **gerenciar as etiquetas criadas** e **imprimir**, já
-com as três decisões de produto abaixo fixadas em código (não são opção do usuário final). 
-Existe um exemplo funcionando de ponta a ponta em
-[`src/LabelSharpDesignerCore.LegacySampleApp`](src/LabelSharpDesignerCore.LegacySampleApp) — todo trecho
-abaixo foi tirado (ou simplificado) direto dele.
+com as três decisões de produto abaixo fixadas em código (não são opção do usuário final). Para
+detalhes/casos de borda (vínculo de campos dinâmico, mala direta, preferências de app etc.) volte
+para [INTEGRATION.md](INTEGRATION.md) e [USAGE.md](USAGE.md).
+
+`UI.WinForms`, `App` e `PrintTransport.Windows` multi-targetam `net48;net9.0-windows(...)` — a API é
+exatamente a mesma usada por uma aplicação .NET moderna (ver
+[GUIA_RAPIDO_MODERNO.md](GUIA_RAPIDO_MODERNO.md)), só a `TargetFramework` do seu projeto muda. Não há
+processo satélite nem ponte de nenhum tipo: você referencia os projetos e chama `EditorForm`/
+`LibraryForm` no seu próprio processo, exatamente como qualquer outra lib WinForms.
+
+**Única diferença de comportamento**: o tema escuro (`Application.SetColorMode`) é uma API exclusiva
+do WinForms .NET 9+ — no .NET Framework 4.x o editor sempre roda no tema claro clássico do Windows.
+
+**Isso vale para aplicações desktop** (WinForms/WPF, sessão de desktop interativa). Se a sua
+aplicação é web (ASP.NET Framework atrás de IIS de produção atendendo clientes remotos pela
+internet), este guia não serve como está — veja a nota sobre Session 0 em
+[INTEGRATION.md §1](INTEGRATION.md#1-como-referenciar-os-projetos).
 
 ## Padrões fixados neste guia
 
 | Ponto | Decisão |
 |---|---|
-| Elementos disponiveis que editor oferece | Só **Texto, Linha, Código de barras, QR Code, Imagem** — o resto (retângulo, elipse, tabela, data/hora...) não aparece |
+| Elementos disponíveis que o editor oferece | Só **Texto, Linha, Código de barras, QR Code, Imagem** — o resto (retângulo, elipse, tabela, data/hora...) não aparece |
+| Painel de camadas | Nunca exibido |
 | Formato de impressão | Diálogo sempre abre em **PPLA raster** com **Transferência térmica (ribbon)** já selecionados — o usuário ainda pode trocar na hora, mas nunca é PDF/térmica direta por padrão |
 
-## Antes de começar: onde esse código roda
+## Passo 1 — Referenciar os projetos
 
-O editor abre como processo separado (`Process.Start`) — só mostra uma janela de verdade
-numa **sessão de desktop interativa** (a própria máquina do usuário, IIS/IIS Express local). Não
-funciona atrás de um IIS de produção atendendo clientes remotos (Session 0). Ver
-[INTEGRATION.md §3.0](INTEGRATION.md#30-antes-de-começar-onde-esse-código-vai-rodar) se esse for o
-seu caso.
+Seu projeto precisa ser `net48` (ou qualquer .NET Framework 4.6.1+) com `UseWindowsForms=true`.
 
-## Passo 1 — Publicar o editor e referenciar a ponte
+- **Projeto SDK-style** (`<Project Sdk="Microsoft.NET.Sdk">` mirando `net48`, o formato moderno de
+  `.csproj` — é o caso, por exemplo, do
+  [`LabelSharpDesignerCore.LegacySampleApp.csproj`](src/LabelSharpDesignerCore.LegacySampleApp/LabelSharpDesignerCore.LegacySampleApp.csproj)
+  deste repositório): `ProjectReference` para `LabelSharpDesignerCore.App` funciona direto, igual ao
+  `SampleApp` faz para net9 — o MSBuild resolve sozinho a perna `net48` de cada dependência.
+- **Projeto clássico** (`packages.config`, sem `Sdk=` no `.csproj`): publique o `App` e referencie os
+  `.dll` compilados:
 
-```powershell
-dotnet publish src/LabelSharpDesignerCore.App -c Release -r win-x64 --self-contained false
-```
+  ```powershell
+  dotnet publish src/LabelSharpDesignerCore.App -c Release -f net48
+  ```
 
-Copie a pasta de saída para um caminho fixo (ex. `C:\LabelSharpDesignerCore\LabelSharpDesignerCore.App.exe`)
-e referencie só a DLL `netstandard2.0` do `Legacy.Bridge` no seu projeto clássico:
+  Copie a pasta de saída inteira (`LabelSharpDesignerCore.App.exe` + todas as DLLs ao lado — o `App`
+  traz várias dependências transitivas: `SkiaSharp`, `PdfSharp`, `ZXing.Net`, `System.Text.Json`) para
+  um caminho fixo acessível pelo seu projeto, e referencie cada `.dll` que for usar:
 
-```xml
-<Reference Include="LabelSharpDesignerCore.Legacy.Bridge">
-  <HintPath>C:\LabelSharpDesignerCore\LabelSharpDesignerCore.Legacy.Bridge.dll</HintPath>
-</Reference>
-```
-
-Requer .NET Framework 4.6.1+ (4.7.2+ recomendado); sem NuGet, sem `bindingRedirect`.
+  ```xml
+  <Reference Include="LabelSharpDesignerCore.App">
+    <HintPath>C:\LabelSharpDesignerCore\LabelSharpDesignerCore.App.dll</HintPath>
+  </Reference>
+  <!-- + Core, Serialization, Layout, Rendering.*, PrintTransport.Windows, UI.WinForms conforme a Passo 1 do INTEGRATION.md -->
+  ```
 
 ## Passo 2 — Nova etiqueta (documento em branco)
 
-Uma etiqueta nova é só um `LabelDocument` em branco salvo como `.label` antes de chamar o editor —
-o mesmo padrão de [USAGE.md §2](USAGE.md#2-modelo-de-documento-core):
+Uma etiqueta nova é só um `LabelDocument` em branco, no mesmo padrão de
+[INTEGRATION.md §3](INTEGRATION.md#3-o-que-você-precisa-saber-do-labeldocument):
 
 ```csharp
-using LabelSharpDesignerCore.Core.Document;
-using LabelSharpDesignerCore.Serialization;
+using LabelSharpDesignerCore.App.Library;
 
-var documento = new LabelDocument
-{
-    Name = "Nova etiqueta",
-    Page = new PageConfig { WidthMm = 100, HeightMm = 60, Dpi = 203 },
-    Layers = [new LabelLayer { Id = "layer-1", Name = "Base", Order = 0 }],
-};
-File.WriteAllText(caminhoDoLabel, LabelDocumentCodec.Save(documento));
+var labelRepository = LibraryRepository.Open(); // %APPDATA%\LabelSharpDesignerCore\Labels
+var entry = labelRepository.Create(); // documento em branco, 100×60mm/203dpi por padrão
 ```
-
-`LabelSharpDesignerCore.Core`/`Serialization` são `netstandard2.0` — referenciáveis direto do seu projeto
-Framework 4.x, sem precisar do satélite para isso.
 
 ## Passo 3 — Implementar o editor (elementos restritos, sem painel de camadas)
 
-Chame `LegacyLauncher` passando os dois campos que travam os padrões da tabela acima:
+`EditorForm`/`LibraryForm` já aceitam os dois parâmetros que travam os padrões da tabela acima —
+`allowedElementKinds` e `showLayersPanel`:
 
 ```csharp
-using LabelSharpDesignerCore.Legacy.Bridge;
+using LabelSharpDesignerCore.App;
+using LabelSharpDesignerCore.App.Library;
 
-private static readonly string[] ElementosPermitidos = ["Text", "Line", "Barcode", "QrCode", "Image"];
+private static readonly NewElementKind[] ElementosPermitidos =
+    [NewElementKind.Text, NewElementKind.Line, NewElementKind.Barcode, NewElementKind.QrCode, NewElementKind.Image];
 
-var launcher = new LegacyLauncher(@"C:\LabelSharpDesignerCore\LabelSharpDesignerCore.App.exe");
-var request = new LaunchRequest
-{
-    FilePath = caminhoDoLabel,
-    AllowedElementKinds = ElementosPermitidos,
-    ShowLayersPanel = false,
-};
-LaunchResult result = launcher.Launch(request); // bloqueia até fechar a janela do editor
-
-switch (result.Outcome)
-{
-    case LaunchOutcome.Saved:     /* arquivo sobrescrito — recarregue a miniatura */ break;
-    case LaunchOutcome.Cancelled: /* fechou sem salvar — nada mudou */ break;
-    case LaunchOutcome.Error:     /* arquivo corrompido/inválido — avise o usuário */ break;
-}
+// Um único documento, sem a biblioteca inteira ao redor:
+using var editor = new EditorForm(
+    entry.Document,
+    onSave: doc => labelRepository.Save(entry, doc),
+    allowedElementKinds: ElementosPermitidos,
+    showLayersPanel: false);
+editor.ShowDialog(this);
 ```
 
-Os nomes em `AllowedElementKinds` são texto puro (`"Text"`, `"Barcode"`, `"QrCode"`, `"Line"`,
-`"Image"` — precisam bater com `NewElementKind.ToString()` do lado do plugin) porque este projeto
-não pode referenciar o enum de verdade, que vive no `App` (`net9.0-windows`, inalcançável a partir de
-`net48`). Um nome que o satélite não reconhecer é só ignorado, nunca derruba o launch inteiro.
-
-> Se preferir deixar essa restrição configurável por um administrador em vez de fixa no código, o
-> `LegacySampleApp` já traz uma tela pronta pra isso —
-> [`EditorLauncherSettingsForm`](src/LabelSharpDesignerCore.LegacySampleApp/Labels/EditorLauncherSettingsForm.cs)
-> — mas para os padrões fixos deste guia o array hardcoded acima é o caminho mais simples.
+`allowedElementKinds`/`showLayersPanel` nunca afetam uma etiqueta já existente com elementos fora
+dessa lista (ex.: um `.label` desenhado antes dessa restrição existir) — eles só decidem o que o
+menu "+ Adicionar" oferece daqui pra frente; abrir/editar/imprimir continua funcionando normalmente
+para qualquer elemento que já esteja no documento.
 
 ## Passo 4 — Gerenciar as etiquetas criadas
 
-O Caminho B não usa a biblioteca do plugin (`LibraryForm`/`LibraryRepository` são `net9.0-windows`,
-inalcançáveis daqui) — listar/criar/renomear/duplicar/excluir é responsabilidade da sua própria
-aplicação, indexado por qualquer chave que fizer sentido no seu domínio (um `LabelId` na tabela de
-produtos, por exemplo). O padrão pronto, um JSON por etiqueta em disco:
+Não precisa reconstruir nada — `LibraryForm` já é a tela completa de listar/criar/editar/duplicar/
+excluir/exportar/imprimir, e repassa os mesmos dois parâmetros para todo `EditorForm` que abrir:
 
 ```csharp
-using LabelSharpDesignerCore.Core.Document;
-using LabelSharpDesignerCore.Serialization;
-
-public sealed class LabelRepository
-{
-    // Open()/OpenAt(dir), List(), Create(name, page), Rename(entry, novoNome),
-    // Duplicate(entry), Delete(entry), Reload(entry) — implementação completa em
-    // src/LabelSharpDesignerCore.LegacySampleApp/Labels/LabelRepository.cs, copiável como está.
-}
+using var library = new LibraryForm(
+    labelRepository,
+    allowedElementKinds: ElementosPermitidos,
+    showLayersPanel: false);
+library.ShowDialog(this);
 ```
 
-A tela de listagem (grid com "+ Nova etiqueta" / "Editar" / "Renomear" / "Duplicar" / "Excluir") já
-existe pronta em
-[`LabelListForm`](src/LabelSharpDesignerCore.LegacySampleApp/Labels/LabelListForm.cs) — `+ Nova etiqueta`
-cria o documento em branco (Passo 2) e já abre o editor em seguida (Passo 3); os outros botões só
-mexem no arquivo `.label` direto via `LabelDocumentCodec`, sem precisar do satélite.
+`LibraryRepository.List()` devolve `IReadOnlyList<LibraryEntry>` (`Id`, `FilePath`, `Document`) — use
+o `Id` como chave estável para qualquer configuração sua vinculada a uma etiqueta específica (ex.:
+vínculo campo-da-entidade → variável-da-etiqueta, ver
+[INTEGRATION.md §4](INTEGRATION.md#4-vinculando-os-dados-da-sua-entidade-às-variáveis-da-etiqueta)).
 
 ## Passo 5 — Imprimir (sempre PPLA raster)
 
-O satélite só edita — imprimir é sempre código da sua própria aplicação, e dá pra fazer 100% em
-`netstandard2.0` (sem precisar do `net9.0-windows`), porque `Core`/`Layout`/`Rendering.ArgoxPpla`/
-`Rendering.Pdf` multi-targetam `netstandard2.0;net9.0`:
+`PrintDialogForm` já abre com **PPLA raster** e **Transferência térmica (ribbon)** pré-selecionados
+— não é preciso passar nada extra:
+
+```csharp
+using var printDialog = new PrintDialogForm(entry.Document);
+printDialog.ShowDialog(this);
+```
+
+Se você monta sua própria tela de impressão em lote em vez de reaproveitar `PrintDialogForm` (como o
+[`PrintProductsForm`](src/LabelSharpDesignerCore.SampleApp/Printing/PrintProductsForm.cs) do exemplo
+net9, que imprime vários produtos de uma vez), aplique o mesmo padrão no seu combo de formato:
+
+```csharp
+_formatCombo.SelectedIndex = (int)PrintDialogForm.PrintFormat.PplaRaster;
+// ...
+_transferTypeCombo.SelectedIndex = 1; // Transferência térmica (ribbon)
+```
+
+Para imprimir sem abrir nenhuma UI (ex.: impressão em lote disparada por código), monte o raster
+direto e envie os bytes — `PrintTransport.Windows` funciona igual em `net48`:
 
 ```csharp
 using LabelSharpDesignerCore.Layout;
 using LabelSharpDesignerCore.Rendering.ArgoxPpla;
+using LabelSharpDesignerCore.PrintTransport.Windows;
 
-var documento = LabelDocumentCodec.Load(File.ReadAllText(caminhoDoLabel));
-var registros = /* um IReadOnlyDictionary<string, object?> por etiqueta física */;
-var fileiras = new LayoutEngine().ResolveBatch(documento, registros);
-
-// Padrão fixo: raster + ribbon — nunca PPLA nativo/térmica direta por padrão.
+var fileiras = new LayoutEngine().ResolveBatch(entry.Document, registros);
 var opcoes = new ArgoxRendererOptions { Darkness = 10, TransferType = ArgoxTransferType.ThermalTransfer };
 foreach (var fileira in fileiras)
 {
     var bytes = PplaRasterBuilder.Build(fileira, new ArgoxRasterOptions { Base = opcoes, FullResolution = true, MirrorHorizontal = true });
-    // envio dos bytes crus — ver abaixo
+    new WindowsRawPrintTransport().Send(bytes, nomeDaImpressora);
 }
 ```
 
-`LabelSharpDesignerCore.PrintTransport.Windows` é `net9.0-windows`-only, então não dá pra referenciar do
-Framework 4.x — o envio dos bytes crus pro spooler precisa da sua própria versão P/Invoke de
-`winspool.drv`. Já existe pronta e testada em
-[`RawPrinterHelper`](src/LabelSharpDesignerCore.LegacySampleApp/Printing/RawPrinterHelper.cs) +
-[`WindowsRawPrintTransport`](src/LabelSharpDesignerCore.LegacySampleApp/Printing/WindowsRawPrintTransport.cs)
-(equivalente clássico do `WindowsRawPrintTransport` do plugin) — copiável como está:
-
-```csharp
-new WindowsRawPrintTransport().Send(bytes, nomeDaImpressora); // null = impressora padrão
-```
-
-Se a sua tela de impressão oferece um combo "Formato" (PDF/PPLA nativo/PPLA raster) como o
-[`PrintProductsForm`](src/LabelSharpDesignerCore.LegacySampleApp/Printing/PrintProductsForm.cs) do
-exemplo, deixe-o sempre abrir com **PPLA raster** + **Transferência térmica (ribbon)** já
-selecionados (`_formatCombo.SelectedIndex = (int)PrintFormat.PplaRaster` /
-`_transferTypeCombo.SelectedIndex = 1`) — é exatamente o que o exemplo faz.
-
 ## Checklist
 
-- [ ] O código que chama `LegacyLauncher.Launch` roda numa sessão de desktop interativa (não IIS de
-      produção remoto).
-- [ ] `LaunchRequest.AllowedElementKinds` = `["Text", "Line", "Barcode", "QrCode", "Image"]` e
-      `ShowLayersPanel = false` em toda chamada ao editor.
-- [ ] Gerenciamento de etiquetas (listar/criar/renomear/duplicar/excluir) é feito pela sua própria
-      aplicação — nunca tentando referenciar `LibraryForm`/`LibraryRepository` do plugin.
-- [ ] A impressão nunca abre em PDF/PPLA nativo por padrão — o combo de formato começa sempre em
-      "PPLA raster" com "Transferência térmica (ribbon)".
-- [ ] Você trata os três `LaunchOutcome` (`Saved`/`Cancelled`/`Error`).
+- [ ] Seu projeto é `net48` (ou 4.6.1+) com `UseWindowsForms=true`, referenciando `App` (e o que mais
+      precisar) direto — sem processo satélite.
+- [ ] Todo `EditorForm`/`LibraryForm` aberto passa `allowedElementKinds: ElementosPermitidos` e
+      `showLayersPanel: false`.
+- [ ] Você reaproveita `LibraryForm`/`LibraryRepository` para gerenciar etiquetas — não reimplementa
+      listar/criar/duplicar/excluir na mão.
+- [ ] Toda impressão (via `PrintDialogForm` ou sua própria tela) começa em "PPLA raster" +
+      "Transferência térmica (ribbon)", nunca em PDF/térmica direta.
+- [ ] Você **não** resolve/rasteriza um documento na mão — sempre `LayoutEngine.Resolve`/
+      `ResolveBatch` primeiro (ver [ARCHITECTURE.md](ARCHITECTURE.md)).

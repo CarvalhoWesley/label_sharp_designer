@@ -7,13 +7,18 @@ mas com um propósito diferente: mostrar uma integração onde a aplicação hos
 **.NET Framework 4.x** (aqui, `net48`) e **gerencia seu próprio catálogo de etiquetas**, em vez de
 reaproveitar as telas prontas do plugin (`LibraryForm`/`LibraryRepository`). O único pedaço do
 LabelSharpDesignerCore que este app usa é o **editor visual**, aberto como processo satélite via
-`LabelSharpDesignerCore.Legacy.Bridge` — exatamente o "Caminho B" descrito em
-[INTEGRATION.md](../../INTEGRATION.md).
+`LabelSharpDesignerCore.Legacy.Bridge`.
 
-Isso simula um cenário real: um sistema legado em .NET Framework não consegue referenciar
-`LabelSharpDesignerCore.App` diretamente (é `net9.0-windows`, um runtime incompatível), então a única
-integração possível é chamar o `.exe` publicado como processo separado, só para desenhar uma
-etiqueta — nunca para listar/gerenciar o catálogo, que é responsabilidade da própria aplicação.
+> **Nota**: `LabelSharpDesignerCore.App`/`UI.WinForms`/`PrintTransport.Windows` hoje multi-targetam
+> `net48;net9.0-windows(...)` e podem ser referenciados diretamente por um host `net48`, exatamente
+> como o [`SampleApp`](../LabelSharpDesignerCore.SampleApp) faz para `net9.0-windows` — ver
+> [INTEGRATION.md](../../INTEGRATION.md) e [GUIA_RAPIDO_FRAMEWORK.md](../../GUIA_RAPIDO_FRAMEWORK.md).
+> Esse é o caminho recomendado hoje. Este projeto continua existindo porque ainda ilustra dois
+> padrões válidos por si só, independente de qualquer limitação de runtime: (1) processo satélite via
+> `Legacy.Bridge`, útil quando você quer isolar o editor do processo hospedeiro (ver
+> [`Legacy.Bridge/README.md`](../LabelSharpDesignerCore.Legacy.Bridge/README.md#quando-ele-ainda-é-necessário)
+> para os cenários em que isso ainda faz sentido), e (2) gerenciar seu próprio catálogo de etiquetas
+> em vez de reaproveitar `LibraryForm`/`LibraryRepository`.
 
 ## Em que difere do `SampleApp`
 
@@ -22,7 +27,7 @@ etiqueta — nunca para listar/gerenciar o catálogo, que é responsabilidade da
 | Tela "Etiquetas" | `LibraryForm` do próprio plugin | `Labels/LabelListForm`, própria — lista/cria/renomeia/duplica/exclui contra `Labels/LabelRepository` |
 | Armazenamento das etiquetas | `%APPDATA%\LabelSharpDesignerCore\Labels` (do plugin) | `%APPDATA%\LabelSharpDesignerCore\LegacySampleApp\Labels` (deste app) |
 | Abrir o editor visual | `new EditorForm(document, onSave)` in-process | `LegacyLauncher.Launch(...)` — processo satélite `LabelSharpDesignerCore.App.exe` |
-| Transporte de impressão | `LabelSharpDesignerCore.PrintTransport.Windows` (referenciado direto) | `Printing/WindowsRawPrintTransport` e `WindowsPdfPrintTransport` — reimplementados aqui, porque aquele projeto é `net9.0-windows`-only e não pode ser referenciado por um projeto `net48` |
+| Transporte de impressão | `LabelSharpDesignerCore.PrintTransport.Windows` (referenciado direto) | `Printing/WindowsRawPrintTransport` e `WindowsPdfPrintTransport` — reimplementados aqui à mão, de quando aquele projeto era `net9.0-windows`-only; hoje ele também compila para `net48` e poderia ser referenciado direto (ver nota acima) |
 
 ## Peças principais
 
@@ -56,11 +61,11 @@ dotnet run --project src/LabelSharpDesignerCore.LegacySampleApp
 
 ## Dependências
 
-Só os projetos multi-target `netstandard2.0;net9.0` — os únicos que um `net48` consegue referenciar:
 `Core`, `Serialization`, `Layout`, `Rendering.Canvas`, `Rendering.Pdf`, `Rendering.ArgoxPpla` e
-`Legacy.Bridge`. Deliberadamente **não** referencia `LabelSharpDesignerCore.App`,
-`PrintTransport.Windows` nem `UI.WinForms` — os três são `net9.0-windows`-only, e mesmo que não
-fossem, `App` é exatamente a peça (biblioteca/gerenciador de etiquetas) que este exemplo existe para
-não reaproveitar. Alvo `net48`: qualquer .NET Framework 4.6.1+ instalado funciona para os projetos
+`Legacy.Bridge` — todos `netstandard2.0;net9.0`. Deliberadamente **não** referencia
+`LabelSharpDesignerCore.App`, `PrintTransport.Windows` nem `UI.WinForms`: não por limitação de
+runtime (os três já compilam para `net48` também), mas porque `App` é exatamente a peça
+(biblioteca/gerenciador de etiquetas) que este exemplo existe para não reaproveitar — ver a nota no
+topo deste README. Alvo `net48`: qualquer .NET Framework 4.6.1+ instalado funciona para os projetos
 referenciados, mas o `.csproj` deste app fixa `net48` por ser o que está instalado na máquina de
 desenvolvimento.

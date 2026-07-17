@@ -1,6 +1,6 @@
 # Guia rápido — editor de etiquetas para aplicação .NET moderna
 
-Versão enxuta de [INTEGRATION.md §2](INTEGRATION.md#2-caminho-a--referência-direta-aplicação-net-moderna)
+Versão enxuta de [INTEGRATION.md §1](INTEGRATION.md#1-como-referenciar-os-projetos)
 com só o essencial: **implementar o editor**, **gerenciar as etiquetas criadas** e **imprimir**, já
 com as três decisões de produto abaixo fixadas em código (não são opção do usuário final). Para
 detalhes/casos de borda (vínculo de campos dinâmico, mala direta, preferências de app etc.) volte
@@ -9,8 +9,9 @@ a ponta em [`src/LabelSharpDesignerCore.SampleApp`](src/LabelSharpDesignerCore.S
 abaixo foi tirado (ou simplificado) direto dele.
 
 Vale para qualquer aplicação .NET moderna (mesmo TFM do próprio plugin — hoje `net9.0-windows`) que
-roda no mesmo processo/host Windows, sem precisar do processo satélite do
-[guia para .NET Framework 4.x](GUIA_RAPIDO_FRAMEWORK.md).
+roda no mesmo processo/host Windows. A mesma API funciona também em .NET Framework 4.x — ver
+[guia para .NET Framework 4.x](GUIA_RAPIDO_FRAMEWORK.md), a única coisa que muda é o `TargetFramework`
+do seu projeto.
 
 ## Padrões fixados neste guia
 
@@ -82,7 +83,7 @@ library.ShowDialog(this);
 `LibraryRepository.List()` devolve `IReadOnlyList<LibraryEntry>` (`Id`, `FilePath`, `Document`) — use
 o `Id` como chave estável para qualquer configuração sua vinculada a uma etiqueta específica (ex.:
 vínculo campo-da-entidade → variável-da-etiqueta, ver
-[INTEGRATION.md §2.4](INTEGRATION.md#24-vinculando-os-dados-da-sua-entidade-às-variáveis-da-etiqueta)).
+[INTEGRATION.md §4](INTEGRATION.md#4-vinculando-os-dados-da-sua-entidade-às-variáveis-da-etiqueta)).
 
 ## Passo 5 — Imprimir (sempre PPLA raster)
 
@@ -107,7 +108,7 @@ _transferTypeCombo.SelectedIndex = 1; // Transferência térmica (ribbon)
 
 Para imprimir sem abrir nenhuma UI (ex.: impressão em lote disparada por código), monte o raster
 direto e envie os bytes — ver
-[INTEGRATION.md §2.6](INTEGRATION.md#26-resolvendo-em-lote-e-imprimindo):
+[INTEGRATION.md §6](INTEGRATION.md#6-resolvendo-em-lote-e-imprimindo):
 
 ```csharp
 using LabelSharpDesignerCore.Layout;

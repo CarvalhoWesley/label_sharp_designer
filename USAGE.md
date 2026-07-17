@@ -23,7 +23,8 @@ API — cada seção tem código mínimo que roda de verdade.
 | Reaproveitar as telas prontas (biblioteca, editor, impressão) | `LabelSharpDesignerCore.App` |
 
 Todos multi-targetam `netstandard2.0;net9.0`, exceto `PrintTransport.Windows`, `UI.WinForms` e `App`
-(`net9.0-windows`) — só esses três exigem um host Windows/WinForms.
+(`net48;net9.0-windows(...)`) — só esses três exigem um host Windows/WinForms, mas funcionam tanto em
+.NET moderno quanto em .NET Framework 4.6.1+ (ver [INTEGRATION.md](INTEGRATION.md)).
 
 ## 2. Modelo de documento (`Core`)
 

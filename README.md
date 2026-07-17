@@ -56,7 +56,7 @@ diferentes entre si.
 | `LabelSharpDesignerCore.PrintTransport.Windows` | Manda os bytes (PDF ou PPLA) para a impressora de verdade. | [src/LabelSharpDesignerCore.PrintTransport.Windows](src/LabelSharpDesignerCore.PrintTransport.Windows/README.md) |
 | `LabelSharpDesignerCore.UI.WinForms` | Os controles visuais reutilizáveis do editor (a área de desenho, painéis). | [src/LabelSharpDesignerCore.UI.WinForms](src/LabelSharpDesignerCore.UI.WinForms/README.md) |
 | `LabelSharpDesignerCore.App` | O aplicativo final: telas prontas de biblioteca, editor, exportação e impressão. | [src/LabelSharpDesignerCore.App](src/LabelSharpDesignerCore.App/README.md) |
-| `LabelSharpDesignerCore.Legacy.Bridge` | Ponte para sistemas antigos (.NET Framework 4.x) abrirem o editor como programa separado. | [src/LabelSharpDesignerCore.Legacy.Bridge](src/LabelSharpDesignerCore.Legacy.Bridge/README.md) |
+| `LabelSharpDesignerCore.Legacy.Bridge` | Ponte opcional para abrir o editor como processo separado — só necessária para hosts web atrás de IIS de produção; `App`/`UI.WinForms` já compilam para .NET Framework 4.x e podem ser referenciados direto (ver [INTEGRATION.md](INTEGRATION.md)). | [src/LabelSharpDesignerCore.Legacy.Bridge](src/LabelSharpDesignerCore.Legacy.Bridge/README.md) |
 | `LabelSharpDesignerCore.SampleApp` | Aplicativo de exemplo mostrando como integrar tudo isso num sistema próprio. | [src/LabelSharpDesignerCore.SampleApp](src/LabelSharpDesignerCore.SampleApp/README.md) |
 
 ## Testes
@@ -70,6 +70,10 @@ dotnet test LabelSharpDesignerCore.slnx
 
 ## Requisitos
 
-- .NET 9 SDK.
+- .NET 9 SDK, com o Developer Pack/targeting pack do .NET Framework 4.8 instalado (necessário para
+  compilar a perna `net48` de `App`/`UI.WinForms`/`PrintTransport.Windows`).
 - Windows para os projetos `App`, `SampleApp`, `UI.WinForms` e `PrintTransport.Windows` (dependem de
-  WinForms/Win32). Os demais projetos são `netstandard2.0;net9.0` e rodam em qualquer plataforma.
+  WinForms/Win32). Os três primeiros multi-targetam `net48;net9.0-windows(...)` — utilizáveis tanto
+  por uma aplicação .NET moderna quanto por uma .NET Framework 4.6.1+ (ver
+  [INTEGRATION.md](INTEGRATION.md)). Os demais projetos são `netstandard2.0;net9.0` e rodam em
+  qualquer plataforma.

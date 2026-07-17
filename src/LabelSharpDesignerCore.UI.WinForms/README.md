@@ -46,4 +46,5 @@ biblioteca inteira do `App` — é exatamente o que faz sentido se você quiser,
 
 Depende de `LabelSharpDesignerCore.Core`, `LabelSharpDesignerCore.Layout`, `LabelSharpDesignerCore.Expressions`,
 `LabelSharpDesignerCore.History` e `LabelSharpDesignerCore.Rendering.Canvas`. Alvo
-`net9.0-windows10.0.19041.0`: **exige Windows** (WinForms).
+`net48;net9.0-windows10.0.19041.0`: **exige Windows** (WinForms), mas roda tanto em .NET moderno
+quanto em .NET Framework 4.6.1+ (ver [INTEGRATION.md](../../INTEGRATION.md)).

@@ -4,6 +4,7 @@ using LabelSharpDesignerCore.Core.Document;
 using LabelSharpDesignerCore.Core.Elements;
 using LabelSharpDesignerCore.Core.Styles;
 using LabelSharpDesignerCore.UI.WinForms.Canvas;
+using LabelSharpDesignerCore.UI.WinForms.Compat;
 
 namespace LabelSharpDesignerCore.UI.WinForms.Panels;
 
@@ -134,7 +135,7 @@ public sealed class PropertyPanel : UserControl
             Maximum = max,
             DecimalPlaces = decimals,
             Increment = decimals == 0 ? 1 : (decimal)Math.Pow(10, -decimals),
-            Value = Math.Clamp(value, min, max),
+            Value = MathCompat.Clamp(value, min, max),
         };
         numeric.ValueChanged += (_, _) => onChange((double)numeric.Value);
         return numeric;
@@ -226,8 +227,8 @@ public sealed class PropertyPanel : UserControl
                     {
                         var placeholder = "{{" + name + "}}";
                         var text = field.Text;
-                        var start = Math.Clamp(lastSelectionStart, 0, text.Length);
-                        var length = Math.Clamp(lastSelectionLength, 0, text.Length - start);
+                        var start = MathCompat.Clamp(lastSelectionStart, 0, text.Length);
+                        var length = MathCompat.Clamp(lastSelectionLength, 0, text.Length - start);
                         var updated = text[..start] + placeholder + text[(start + length)..];
 
                         field.Text = updated;
@@ -376,7 +377,7 @@ public sealed class PropertyPanel : UserControl
 
         AddLabel("Alinhamento");
         var alignCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
-        foreach (var value in Enum.GetValues<TextAlign>())
+        foreach (var value in (TextAlign[])Enum.GetValues(typeof(TextAlign)))
         {
             alignCombo.Items.Add(value);
         }
@@ -415,7 +416,7 @@ public sealed class PropertyPanel : UserControl
     {
         AddLabel("Origem");
         var sourceCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
-        foreach (var value in Enum.GetValues<DateTimeValueSource>())
+        foreach (var value in (DateTimeValueSource[])Enum.GetValues(typeof(DateTimeValueSource)))
         {
             sourceCombo.Items.Add(value);
         }
@@ -510,7 +511,7 @@ public sealed class PropertyPanel : UserControl
 
         AddLabel("Simbologia");
         var symbologyCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
-        foreach (var value in Enum.GetValues<BarcodeSymbology>())
+        foreach (var value in (BarcodeSymbology[])Enum.GetValues(typeof(BarcodeSymbology)))
         {
             symbologyCombo.Items.Add(value);
         }
@@ -546,7 +547,7 @@ public sealed class PropertyPanel : UserControl
 
         AddLabel("Nível de correção de erro");
         var eccCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
-        foreach (var value in Enum.GetValues<QrErrorCorrectionLevel>())
+        foreach (var value in (QrErrorCorrectionLevel[])Enum.GetValues(typeof(QrErrorCorrectionLevel)))
         {
             eccCombo.Items.Add(value);
         }
@@ -581,7 +582,7 @@ public sealed class PropertyPanel : UserControl
 
         AddLabel("Ajuste");
         var fitCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
-        foreach (var value in Enum.GetValues<ImageFit>())
+        foreach (var value in (ImageFit[])Enum.GetValues(typeof(ImageFit)))
         {
             fitCombo.Items.Add(value);
         }
@@ -711,7 +712,7 @@ public sealed class PropertyPanel : UserControl
 
                 var widthText = row.Cells["WidthMm"].Value?.ToString();
                 var width = double.TryParse(widthText, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedWidth) ? parsedWidth : 20;
-                columns.Add(new TableColumn { Header = header, DataField = field, WidthMm = width });
+                columns.Add(new TableColumn { Header = header!, DataField = field!, WidthMm = width });
             }
 
             if (columns.Count == 0)

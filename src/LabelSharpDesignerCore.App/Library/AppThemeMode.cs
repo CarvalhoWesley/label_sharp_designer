@@ -20,12 +20,16 @@ internal static class AppThemeModeExtensions
         _ => AppThemeMode.System,
     };
 
+#if NET9_0_OR_GREATER
+    // SystemColorMode/Application.SetColorMode (dark-mode theming) is a .NET 9+ WinForms API with no
+    // net48 equivalent — the net48 leg never calls this, so it doesn't need the conversion at all.
     public static SystemColorMode ToSystemColorMode(this AppThemeMode mode) => mode switch
     {
         AppThemeMode.Light => SystemColorMode.Classic,
         AppThemeMode.Dark => SystemColorMode.Dark,
         _ => SystemColorMode.System,
     };
+#endif
 
     public static string Label(this AppThemeMode mode) => mode switch
     {

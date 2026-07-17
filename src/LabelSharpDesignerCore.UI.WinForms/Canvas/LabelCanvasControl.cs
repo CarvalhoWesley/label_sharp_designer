@@ -3,6 +3,7 @@ using LabelSharpDesignerCore.Core.Document;
 using LabelSharpDesignerCore.Core.Elements;
 using LabelSharpDesignerCore.Core.Geometry;
 using LabelSharpDesignerCore.History;
+using LabelSharpDesignerCore.UI.WinForms.Compat;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 
@@ -422,7 +423,7 @@ public sealed class LabelCanvasControl : SKControl
             return;
         }
 
-        var clamped = Math.Clamp(pixelsPerMm, MinPixelsPerMm, MaxPixelsPerMm);
+        var clamped = MathCompat.Clamp(pixelsPerMm, MinPixelsPerMm, MaxPixelsPerMm);
         _transform.ZoomAtPoint(clamped, anchorPx);
         _manualZoom = true;
         ViewChanged?.Invoke(this, EventArgs.Empty);

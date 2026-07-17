@@ -2,18 +2,30 @@
 
 ## O que é
 
-Uma "ponte" bem fininha que permite uma aplicação legada em **ASP.NET Framework 4.x** (ou qualquer
-coisa que não possa referenciar `net9.0-windows` diretamente) abrir o editor de etiquetas
-(`LabelSharpDesignerCore.App`) mesmo sem conseguir referenciá-lo como biblioteca.
+Uma "ponte" bem fininha que permite abrir o editor de etiquetas (`LabelSharpDesignerCore.App`) como
+**processo separado**, conversando só por argumentos de linha de comando e código de saída do
+processo, em vez de referenciá-lo como biblioteca no mesmo processo.
 
-## O problema que ele resolve
+## Quando ele ainda é necessário
 
-`LabelSharpDesignerCore.App` é um app WinForms `net9.0-windows` — um sistema em .NET Framework 4.x
-clássico não consegue referenciar isso diretamente (são runtimes incompatíveis). A solução é rodar o
-`App` como um **processo separado** (um `.exe` publicado à parte) e conversar com ele só por
-argumentos de linha de comando e código de saída do processo. Este projeto é o "dicionário comum"
-dos dois lados dessa conversa — ele mesmo compila para `netstandard2.0`, então tanto o app legado
-quanto o `App` moderno conseguem referenciá-lo.
+`LabelSharpDesignerCore.App` multi-targeta `net48;net9.0-windows(...)` — qualquer host, .NET moderno
+ou .NET Framework 4.6.1+, já consegue referenciá-lo **diretamente** (ver
+[INTEGRATION.md](../../INTEGRATION.md) e [ARCHITECTURE.md §7](../../ARCHITECTURE.md#7-integração-com-hosts-net-framework-4x)).
+Isso deixou de ser um problema de incompatibilidade de runtime — não existe mais essa barreira.
+
+Este projeto continua útil só quando abrir o editor **no mesmo processo** não é uma opção:
+
+- **Host web atrás de IIS de produção** atendendo clientes remotos pela internet: o worker process
+  roda na Session 0 (isolada de qualquer desktop desde o Vista/Server 2008), então nenhuma UI
+  WinForms consegue aparecer para o usuário do navegador dali, referenciando `App` direto ou não. Um
+  processo satélite ainda funciona quando "o servidor" é, na prática, o computador da pessoa que vai
+  desenhar a etiqueta (IIS Express local, uma estação rodando seu próprio IIS local como o usuário
+  logado).
+- **Isolamento de processo por outros motivos** — ex.: um crash do editor não deve derrubar o host.
+
+Fora desses cenários, prefira referenciar `LabelSharpDesignerCore.App` direto — é mais simples e não
+depende de publicar/versionar um `.exe` satélite à parte. Este projeto compila para `netstandard2.0`
+justamente para continuar utilizável dos dois lados dessa conversa quando ela ainda fizer sentido.
 
 ## Como a conversa funciona
 
@@ -55,9 +67,8 @@ switch (resultado.Outcome)
 
 **Importante**: isso só funciona quando o código chamador roda numa sessão de desktop interativa da
 máquina do usuário (ex.: IIS Express local, uma estação rodando seu próprio servidor). Não funciona
-num IIS de produção atendendo clientes remotos pela internet — veja a seção 3 do
-[INTEGRATION.md](../../INTEGRATION.md) para o passo a passo completo, incluindo os casos em que este
-caminho não se aplica.
+num IIS de produção atendendo clientes remotos pela internet — veja a nota no fim da
+[seção 1 do INTEGRATION.md](../../INTEGRATION.md#1-como-referenciar-os-projetos) para mais contexto.
 
 ## Dependências
 

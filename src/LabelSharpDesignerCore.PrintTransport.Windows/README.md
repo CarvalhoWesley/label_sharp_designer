@@ -41,5 +41,6 @@ IReadOnlyList<string> impressoras = new WindowsPrinterDiscovery().ListAvailable(
 ## Dependências
 
 Não depende de nenhum outro projeto do LabelSharpDesignerCore — é um projeto "burro" no bom sentido, só
-sabe mandar bytes para o Windows. Alvo `net9.0-windows`: **exige Windows**, já que usa APIs Win32
-(`winspool.drv`) e do driver de impressão do sistema.
+sabe mandar bytes para o Windows. Alvo `net48;net9.0-windows`: **exige Windows**, já que usa APIs
+Win32 (`winspool.drv`) e do driver de impressão do sistema — mas roda tanto em .NET moderno quanto em
+.NET Framework 4.6.1+ (ver [INTEGRATION.md](../../INTEGRATION.md)).

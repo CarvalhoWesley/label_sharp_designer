@@ -15,9 +15,15 @@
     <ProjectReference Include="..\LabelSharpDesignerCore.Legacy.Bridge\LabelSharpDesignerCore.Legacy.Bridge.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- net9.0-windows gets System.Text.Json from the shared framework; net48 needs it from NuGet
+         (same pattern as LegacySampleApp, the other net48 WinForms host in this repo). -->
+    <PackageReference Include="System.Text.Json" Version="9.0.0" Condition="'$(TargetFramework)' == 'net48'" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <TargetFrameworks>net48;net9.0-windows10.0.19041.0</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon />
     <!-- Application.SetColorMode/SystemColorMode (dark-mode theming) is still experimental on .NET 9. -->
