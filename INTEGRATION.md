@@ -8,6 +8,11 @@ ativos/o-que-for e quero cadastrar e imprimir etiquetas para eles — o que eu p
 referência objetiva de cada elemento/API disponível (sem o passo a passo de montar uma tela do zero),
 veja [USAGE.md](USAGE.md).
 
+Se você quer um passo a passo curto (implementar o editor, gerenciar etiquetas, imprimir) já com
+decisões de produto fixadas (elementos restritos, painel de camadas oculto, impressão sempre em
+raster), veja [GUIA_RAPIDO_MODERNO.md](GUIA_RAPIDO_MODERNO.md) (Caminho A) ou
+[GUIA_RAPIDO_FRAMEWORK.md](GUIA_RAPIDO_FRAMEWORK.md) (Caminho B) em vez deste guia completo.
+
 Existe um exemplo completo e funcional no próprio repositório —
 [`src/LabelSharpDesigner.SampleApp`](src/LabelSharpDesigner.SampleApp) — que implementa
 exatamente o que este guia descreve, com um catálogo de produtos fictício no lugar da sua

@@ -184,8 +184,9 @@ public sealed class PrintDialogForm : Form
         _top += RecordsAreaHeight + 10;
         RebuildRecordsArea();
 
-        // Clamp defensively — a hand-edited or stale settings file could carry an out-of-range value.
-        _formatCombo.SelectedIndex = Math.Clamp((int)_lastSettings.Format, 0, _formatCombo.Items.Count - 1);
+        // Always defaults to PPLA raster, regardless of whatever format was last used — this app's
+        // print flow is fixed on raster/thermal-transfer output, not a per-user remembered preference.
+        _formatCombo.SelectedIndex = (int)PrintFormat.PplaRaster;
     }
 
     private Label AddLabel(string text)
@@ -365,7 +366,9 @@ public sealed class PrintDialogForm : Form
                 AddLocalLabel("Tipo de impressão");
                 _transferTypeCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Top = localTop };
                 _transferTypeCombo.Items.AddRange(["Térmica direta", "Transferência térmica (ribbon)"]);
-                _transferTypeCombo.SelectedIndex = _lastSettings.TransferType == ArgoxTransferTypeSetting.ThermalTransfer ? 1 : 0;
+                // Always defaults to "ribbon", same fixed-default reasoning as the format combo above —
+                // never seeded from _lastSettings.TransferType.
+                _transferTypeCombo.SelectedIndex = 1;
                 _formatOptionsPanel.Controls.Add(_transferTypeCombo);
                 localTop += 30;
 

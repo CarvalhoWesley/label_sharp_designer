@@ -160,7 +160,9 @@ public sealed class PrintProductsForm : Form
         configContent.Controls.Add(_formatOptionsPanel);
 
         LoadLabelEntries();
-        _formatCombo.SelectedIndex = 0;
+        // Always defaults to PPLA raster — this app's print flow is fixed on raster/thermal-transfer
+        // output, never a hardcoded PDF default.
+        _formatCombo.SelectedIndex = (int)PrintDialogForm.PrintFormat.PplaRaster;
     }
 
     private DataGridView BuildProductsGrid()
@@ -251,7 +253,8 @@ public sealed class PrintProductsForm : Form
             localTop += 20;
             _transferTypeCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 296, Top = localTop };
             _transferTypeCombo.Items.AddRange(["Térmica direta", "Transferência térmica (ribbon)"]);
-            _transferTypeCombo.SelectedIndex = 0;
+            // Always defaults to "ribbon", same fixed-default reasoning as the format combo above.
+            _transferTypeCombo.SelectedIndex = 1;
             _formatOptionsPanel.Controls.Add(_transferTypeCombo);
             localTop += 34;
 

@@ -17,7 +17,10 @@ dinamicamente com dados reais (nome do produto, preço, código de barras) na ho
 - Quer entender o **pipeline interno** (como um documento vira etiqueta impressa)? Veja
   [ARCHITECTURE.md](ARCHITECTURE.md).
 - Quer **usar** o LabelSharpDesigner a partir de outra aplicação .NET? Veja
-  [INTEGRATION.md](INTEGRATION.md) (passo a passo) e [USAGE.md](USAGE.md) (referência de API).
+  [INTEGRATION.md](INTEGRATION.md) (passo a passo completo) e [USAGE.md](USAGE.md) (referência de
+  API). Para um passo a passo curto e direto (implementar o editor, gerenciar etiquetas, imprimir),
+  veja [GUIA_RAPIDO_MODERNO.md](GUIA_RAPIDO_MODERNO.md) (.NET moderno) ou
+  [GUIA_RAPIDO_FRAMEWORK.md](GUIA_RAPIDO_FRAMEWORK.md) (.NET Framework 4.x).
 - Quer ver um exemplo funcionando de ponta a ponta? Abra
   [`src/LabelSharpDesigner.SampleApp`](src/LabelSharpDesigner.SampleApp).
 
