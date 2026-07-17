@@ -4,7 +4,7 @@ Versão enxuta de [INTEGRATION.md §3](INTEGRATION.md#3-caminho-b--aplicação-l
 com só o essencial: **implementar o editor**, **gerenciar as etiquetas criadas** e **imprimir**, já
 com as três decisões de produto abaixo fixadas em código (não são opção do usuário final). 
 Existe um exemplo funcionando de ponta a ponta em
-[`src/LabelSharpDesigner.LegacySampleApp`](src/LabelSharpDesigner.LegacySampleApp) — todo trecho
+[`src/LabelSharpDesignerCore.LegacySampleApp`](src/LabelSharpDesignerCore.LegacySampleApp) — todo trecho
 abaixo foi tirado (ou simplificado) direto dele.
 
 ## Padrões fixados neste guia
@@ -25,15 +25,15 @@ seu caso.
 ## Passo 1 — Publicar o editor e referenciar a ponte
 
 ```powershell
-dotnet publish src/LabelSharpDesigner.App -c Release -r win-x64 --self-contained false
+dotnet publish src/LabelSharpDesignerCore.App -c Release -r win-x64 --self-contained false
 ```
 
-Copie a pasta de saída para um caminho fixo (ex. `C:\LabelSharpDesigner\LabelSharpDesigner.App.exe`)
+Copie a pasta de saída para um caminho fixo (ex. `C:\LabelSharpDesignerCore\LabelSharpDesignerCore.App.exe`)
 e referencie só a DLL `netstandard2.0` do `Legacy.Bridge` no seu projeto clássico:
 
 ```xml
-<Reference Include="LabelSharpDesigner.Legacy.Bridge">
-  <HintPath>C:\LabelSharpDesigner\LabelSharpDesigner.Legacy.Bridge.dll</HintPath>
+<Reference Include="LabelSharpDesignerCore.Legacy.Bridge">
+  <HintPath>C:\LabelSharpDesignerCore\LabelSharpDesignerCore.Legacy.Bridge.dll</HintPath>
 </Reference>
 ```
 
@@ -45,8 +45,8 @@ Uma etiqueta nova é só um `LabelDocument` em branco salvo como `.label` antes 
 o mesmo padrão de [USAGE.md §2](USAGE.md#2-modelo-de-documento-core):
 
 ```csharp
-using LabelSharpDesigner.Core.Document;
-using LabelSharpDesigner.Serialization;
+using LabelSharpDesignerCore.Core.Document;
+using LabelSharpDesignerCore.Serialization;
 
 var documento = new LabelDocument
 {
@@ -57,7 +57,7 @@ var documento = new LabelDocument
 File.WriteAllText(caminhoDoLabel, LabelDocumentCodec.Save(documento));
 ```
 
-`LabelSharpDesigner.Core`/`Serialization` são `netstandard2.0` — referenciáveis direto do seu projeto
+`LabelSharpDesignerCore.Core`/`Serialization` são `netstandard2.0` — referenciáveis direto do seu projeto
 Framework 4.x, sem precisar do satélite para isso.
 
 ## Passo 3 — Implementar o editor (elementos restritos, sem painel de camadas)
@@ -65,11 +65,11 @@ Framework 4.x, sem precisar do satélite para isso.
 Chame `LegacyLauncher` passando os dois campos que travam os padrões da tabela acima:
 
 ```csharp
-using LabelSharpDesigner.Legacy.Bridge;
+using LabelSharpDesignerCore.Legacy.Bridge;
 
 private static readonly string[] ElementosPermitidos = ["Text", "Line", "Barcode", "QrCode", "Image"];
 
-var launcher = new LegacyLauncher(@"C:\LabelSharpDesigner\LabelSharpDesigner.App.exe");
+var launcher = new LegacyLauncher(@"C:\LabelSharpDesignerCore\LabelSharpDesignerCore.App.exe");
 var request = new LaunchRequest
 {
     FilePath = caminhoDoLabel,
@@ -93,7 +93,7 @@ não pode referenciar o enum de verdade, que vive no `App` (`net9.0-windows`, in
 
 > Se preferir deixar essa restrição configurável por um administrador em vez de fixa no código, o
 > `LegacySampleApp` já traz uma tela pronta pra isso —
-> [`EditorLauncherSettingsForm`](src/LabelSharpDesigner.LegacySampleApp/Labels/EditorLauncherSettingsForm.cs)
+> [`EditorLauncherSettingsForm`](src/LabelSharpDesignerCore.LegacySampleApp/Labels/EditorLauncherSettingsForm.cs)
 > — mas para os padrões fixos deste guia o array hardcoded acima é o caminho mais simples.
 
 ## Passo 4 — Gerenciar as etiquetas criadas
@@ -104,20 +104,20 @@ aplicação, indexado por qualquer chave que fizer sentido no seu domínio (um `
 produtos, por exemplo). O padrão pronto, um JSON por etiqueta em disco:
 
 ```csharp
-using LabelSharpDesigner.Core.Document;
-using LabelSharpDesigner.Serialization;
+using LabelSharpDesignerCore.Core.Document;
+using LabelSharpDesignerCore.Serialization;
 
 public sealed class LabelRepository
 {
     // Open()/OpenAt(dir), List(), Create(name, page), Rename(entry, novoNome),
     // Duplicate(entry), Delete(entry), Reload(entry) — implementação completa em
-    // src/LabelSharpDesigner.LegacySampleApp/Labels/LabelRepository.cs, copiável como está.
+    // src/LabelSharpDesignerCore.LegacySampleApp/Labels/LabelRepository.cs, copiável como está.
 }
 ```
 
 A tela de listagem (grid com "+ Nova etiqueta" / "Editar" / "Renomear" / "Duplicar" / "Excluir") já
 existe pronta em
-[`LabelListForm`](src/LabelSharpDesigner.LegacySampleApp/Labels/LabelListForm.cs) — `+ Nova etiqueta`
+[`LabelListForm`](src/LabelSharpDesignerCore.LegacySampleApp/Labels/LabelListForm.cs) — `+ Nova etiqueta`
 cria o documento em branco (Passo 2) e já abre o editor em seguida (Passo 3); os outros botões só
 mexem no arquivo `.label` direto via `LabelDocumentCodec`, sem precisar do satélite.
 
@@ -128,8 +128,8 @@ O satélite só edita — imprimir é sempre código da sua própria aplicação
 `Rendering.Pdf` multi-targetam `netstandard2.0;net9.0`:
 
 ```csharp
-using LabelSharpDesigner.Layout;
-using LabelSharpDesigner.Rendering.ArgoxPpla;
+using LabelSharpDesignerCore.Layout;
+using LabelSharpDesignerCore.Rendering.ArgoxPpla;
 
 var documento = LabelDocumentCodec.Load(File.ReadAllText(caminhoDoLabel));
 var registros = /* um IReadOnlyDictionary<string, object?> por etiqueta física */;
@@ -144,11 +144,11 @@ foreach (var fileira in fileiras)
 }
 ```
 
-`LabelSharpDesigner.PrintTransport.Windows` é `net9.0-windows`-only, então não dá pra referenciar do
+`LabelSharpDesignerCore.PrintTransport.Windows` é `net9.0-windows`-only, então não dá pra referenciar do
 Framework 4.x — o envio dos bytes crus pro spooler precisa da sua própria versão P/Invoke de
 `winspool.drv`. Já existe pronta e testada em
-[`RawPrinterHelper`](src/LabelSharpDesigner.LegacySampleApp/Printing/RawPrinterHelper.cs) +
-[`WindowsRawPrintTransport`](src/LabelSharpDesigner.LegacySampleApp/Printing/WindowsRawPrintTransport.cs)
+[`RawPrinterHelper`](src/LabelSharpDesignerCore.LegacySampleApp/Printing/RawPrinterHelper.cs) +
+[`WindowsRawPrintTransport`](src/LabelSharpDesignerCore.LegacySampleApp/Printing/WindowsRawPrintTransport.cs)
 (equivalente clássico do `WindowsRawPrintTransport` do plugin) — copiável como está:
 
 ```csharp
@@ -156,7 +156,7 @@ new WindowsRawPrintTransport().Send(bytes, nomeDaImpressora); // null = impresso
 ```
 
 Se a sua tela de impressão oferece um combo "Formato" (PDF/PPLA nativo/PPLA raster) como o
-[`PrintProductsForm`](src/LabelSharpDesigner.LegacySampleApp/Printing/PrintProductsForm.cs) do
+[`PrintProductsForm`](src/LabelSharpDesignerCore.LegacySampleApp/Printing/PrintProductsForm.cs) do
 exemplo, deixe-o sempre abrir com **PPLA raster** + **Transferência térmica (ribbon)** já
 selecionados (`_formatCombo.SelectedIndex = (int)PrintFormat.PplaRaster` /
 `_transferTypeCombo.SelectedIndex = 1`) — é exatamente o que o exemplo faz.

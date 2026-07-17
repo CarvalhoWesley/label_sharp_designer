@@ -1,26 +1,26 @@
-# LabelSharpDesigner — Referência de uso do plugin
+# LabelSharpDesignerCore — Referência de uso do plugin
 
-Referência objetiva de **tudo** que o LabelSharpDesigner oferece para quem vai consumi-lo de outra
+Referência objetiva de **tudo** que o LabelSharpDesignerCore oferece para quem vai consumi-lo de outra
 aplicação .NET: modelo de documento, elementos disponíveis, variáveis/expressões, resolução,
 exportação, impressão e as telas prontas. Para "como funciona por dentro" veja
 [ARCHITECTURE.md](ARCHITECTURE.md); para o passo a passo de montar uma tela de produtos + etiquetas
 + impressão do zero veja [INTEGRATION.md](INTEGRATION.md) (exemplo completo em
-[`src/LabelSharpDesigner.SampleApp`](src/LabelSharpDesigner.SampleApp)). Este documento é o mapa de
+[`src/LabelSharpDesignerCore.SampleApp`](src/LabelSharpDesignerCore.SampleApp)). Este documento é o mapa de
 API — cada seção tem código mínimo que roda de verdade.
 
 ## 1. O que referenciar
 
 | Você quer... | Projeto |
 |---|---|
-| Montar/ler um `LabelDocument` na mão | `LabelSharpDesigner.Core` |
-| Carregar/salvar arquivos `.label` | `LabelSharpDesigner.Serialization` |
-| Resolver o documento (`{{ }}`, mm→dots) para export/print/preview | `LabelSharpDesigner.Layout` |
-| Exportar PNG | `LabelSharpDesigner.Rendering.Png` |
-| Exportar PDF | `LabelSharpDesigner.Rendering.Pdf` |
-| Exportar/imprimir PPLA (Argox térmica) | `LabelSharpDesigner.Rendering.ArgoxPpla` |
-| Enviar bytes para uma impressora Windows | `LabelSharpDesigner.PrintTransport.Windows` |
-| Preview ao vivo dentro da sua própria UI WinForms | `LabelSharpDesigner.Rendering.Canvas` (+ `SkiaSharp.Views.WindowsForms`) |
-| Reaproveitar as telas prontas (biblioteca, editor, impressão) | `LabelSharpDesigner.App` |
+| Montar/ler um `LabelDocument` na mão | `LabelSharpDesignerCore.Core` |
+| Carregar/salvar arquivos `.label` | `LabelSharpDesignerCore.Serialization` |
+| Resolver o documento (`{{ }}`, mm→dots) para export/print/preview | `LabelSharpDesignerCore.Layout` |
+| Exportar PNG | `LabelSharpDesignerCore.Rendering.Png` |
+| Exportar PDF | `LabelSharpDesignerCore.Rendering.Pdf` |
+| Exportar/imprimir PPLA (Argox térmica) | `LabelSharpDesignerCore.Rendering.ArgoxPpla` |
+| Enviar bytes para uma impressora Windows | `LabelSharpDesignerCore.PrintTransport.Windows` |
+| Preview ao vivo dentro da sua própria UI WinForms | `LabelSharpDesignerCore.Rendering.Canvas` (+ `SkiaSharp.Views.WindowsForms`) |
+| Reaproveitar as telas prontas (biblioteca, editor, impressão) | `LabelSharpDesignerCore.App` |
 
 Todos multi-targetam `netstandard2.0;net9.0`, exceto `PrintTransport.Windows`, `UI.WinForms` e `App`
 (`net9.0-windows`) — só esses três exigem um host Windows/WinForms.
@@ -114,7 +114,7 @@ Elements =
   uma variável não declarada lança `ExpressionEvaluationException` ("Unknown variable '...'").
 - `LabelVariable.Type` (`String`/`Number`/`Date`/`Boolean`) é só uma dica para quem constrói o
   `SampleData` (seção 5) — o `LayoutEngine` em si não valida o tipo do valor recebido.
-- No editor (`LabelSharpDesigner.App`), o botão **"Variáveis..."** da toolbar declara/edita essa lista
+- No editor (`LabelSharpDesignerCore.App`), o botão **"Variáveis..."** da toolbar declara/edita essa lista
   (com validação do `DefaultValue` contra o `Type`), e o botão **"{{ }} Inserir variável..."** ao lado
   de cada campo de texto/dados insere `{{ nome }}` no cursor — nenhum dos dois é obrigatório para usar
   o plugin via código, mas é o caminho mais rápido para montar etiquetas manualmente.
@@ -125,7 +125,7 @@ Elements =
 recebem um `ResolvedDocument` já pronto.
 
 ```csharp
-using LabelSharpDesigner.Layout;
+using LabelSharpDesignerCore.Layout;
 
 var options = new LayoutOptions
 {
@@ -165,8 +165,8 @@ quantidade de etiquetas físicas (ver [ARCHITECTURE.md §5](ARCHITECTURE.md#5-im
 ## 6. Exportando
 
 ```csharp
-using LabelSharpDesigner.Rendering.Png;
-using LabelSharpDesigner.Rendering.Pdf;
+using LabelSharpDesignerCore.Rendering.Png;
+using LabelSharpDesignerCore.Rendering.Pdf;
 
 byte[] png = PngExporter.Export(resolved, PngScale.X2);              // 1x/2x/3x
 byte[] thumb = PngExporter.ExportScaled(resolved, targetWidthPx: 240); // largura customizada
@@ -181,7 +181,7 @@ embutidos como raster (nenhuma simbologia tem representação vetorial pura).
 ## 7. Imprimindo
 
 ```csharp
-using LabelSharpDesigner.PrintTransport.Windows;
+using LabelSharpDesignerCore.PrintTransport.Windows;
 
 // PDF via driver do Windows — funciona com qualquer impressora instalada
 new WindowsPdfPrintTransport { Copies = 1 }.Send(pdf, target: null); // null = impressora padrão
@@ -190,10 +190,10 @@ new WindowsPdfPrintTransport { Copies = 1 }.Send(pdf, target: null); // null = i
 IReadOnlyList<string> impressoras = new WindowsPrinterDiscovery().ListAvailable();
 ```
 
-Para impressoras térmicas Argox (PPLA), via `LabelSharpDesigner.Rendering.ArgoxPpla`:
+Para impressoras térmicas Argox (PPLA), via `LabelSharpDesignerCore.Rendering.ArgoxPpla`:
 
 ```csharp
-using LabelSharpDesigner.Rendering.ArgoxPpla;
+using LabelSharpDesignerCore.Rendering.ArgoxPpla;
 
 var opcoes = new ArgoxRendererOptions
 {
@@ -224,7 +224,7 @@ driver — é o único caminho para PPLA. `target: null` usa a impressora padrã
 ## 8. Serialização (`.label`)
 
 ```csharp
-using LabelSharpDesigner.Serialization;
+using LabelSharpDesignerCore.Serialization;
 
 string json = LabelDocumentCodec.Save(document);
 File.WriteAllText("etiqueta.label", json);
@@ -235,13 +235,13 @@ LabelDocument carregado = LabelDocumentCodec.Load(File.ReadAllText("etiqueta.lab
 `Load` aplica automaticamente a `MigrationChain` para arquivos de versões antigas do schema — nunca
 precisa tratar isso manualmente.
 
-## 9. Telas prontas (`LabelSharpDesigner.App`)
+## 9. Telas prontas (`LabelSharpDesignerCore.App`)
 
 Não precisa reconstruir UI nenhuma — todo o editor visual já existe e é reaproveitável direto:
 
 | Classe | O que é |
 |---|---|
-| `LibraryRepository` | Catálogo em disco de `.label` (`%APPDATA%\LabelSharpDesigner\Labels`). `Open()`/`OpenAt(dir)`, `List()`, `Create(pageConfig)`, `Save(entry, doc)`, `Duplicate(entry)`, `Delete(entry)` |
+| `LibraryRepository` | Catálogo em disco de `.label` (`%APPDATA%\LabelSharpDesignerCore\Labels`). `Open()`/`OpenAt(dir)`, `List()`, `Create(pageConfig)`, `Save(entry, doc)`, `Duplicate(entry)`, `Delete(entry)` |
 | `LibraryForm` | Tela completa de listar/criar/editar/duplicar/excluir/exportar/imprimir — `new LibraryForm(repository).ShowDialog()` |
 | `EditorForm` | Editor visual de um documento — `new EditorForm(document, doc => Save(doc)).ShowDialog()` |
 | `VariablesForm` | Declarar/editar `LabelDocument.Variables` (com validação de tipo) |
@@ -256,15 +256,15 @@ em lote com vínculo dinâmico de campos) em [INTEGRATION.md](INTEGRATION.md).
 Ponta a ponta sem nenhuma UI — monta o documento, resolve, exporta PNG/PDF e imprime:
 
 ```csharp
-using LabelSharpDesigner.Core.Document;
-using LabelSharpDesigner.Core.Elements;
-using LabelSharpDesigner.Core.Geometry;
-using LabelSharpDesigner.Core.Styles;
-using LabelSharpDesigner.Layout;
-using LabelSharpDesigner.PrintTransport.Windows;
-using LabelSharpDesigner.Rendering.Pdf;
-using LabelSharpDesigner.Rendering.Png;
-using LabelSharpDesigner.Serialization;
+using LabelSharpDesignerCore.Core.Document;
+using LabelSharpDesignerCore.Core.Elements;
+using LabelSharpDesignerCore.Core.Geometry;
+using LabelSharpDesignerCore.Core.Styles;
+using LabelSharpDesignerCore.Layout;
+using LabelSharpDesignerCore.PrintTransport.Windows;
+using LabelSharpDesignerCore.Rendering.Pdf;
+using LabelSharpDesignerCore.Rendering.Png;
+using LabelSharpDesignerCore.Serialization;
 
 var document = new LabelDocument
 {

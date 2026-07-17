@@ -1,0 +1,36 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LabelSharpDesignerCore.App/LabelSharpDesignerCore.App.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Barcode/LabelSharpDesignerCore.Barcode.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Core/LabelSharpDesignerCore.Core.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Expressions/LabelSharpDesignerCore.Expressions.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.History/LabelSharpDesignerCore.History.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Layout/LabelSharpDesignerCore.Layout.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Legacy.Bridge/LabelSharpDesignerCore.Legacy.Bridge.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.LegacySampleApp/LabelSharpDesignerCore.LegacySampleApp.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.PrintTransport.Windows/LabelSharpDesignerCore.PrintTransport.Windows.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Rendering.Abstractions/LabelSharpDesignerCore.Rendering.Abstractions.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Rendering.ArgoxPpla/LabelSharpDesignerCore.Rendering.ArgoxPpla.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Rendering.Canvas/LabelSharpDesignerCore.Rendering.Canvas.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Rendering.Pdf/LabelSharpDesignerCore.Rendering.Pdf.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Rendering.Png/LabelSharpDesignerCore.Rendering.Png.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.SampleApp/LabelSharpDesignerCore.SampleApp.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.Serialization/LabelSharpDesignerCore.Serialization.csproj" />
+    <Project Path="src/LabelSharpDesignerCore.UI.WinForms/LabelSharpDesignerCore.UI.WinForms.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LabelSharpDesignerCore.App.Tests/LabelSharpDesignerCore.App.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.Barcode.Tests/LabelSharpDesignerCore.Barcode.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.Core.Tests/LabelSharpDesignerCore.Core.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.Expressions.Tests/LabelSharpDesignerCore.Expressions.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.History.Tests/LabelSharpDesignerCore.History.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.Layout.Tests/LabelSharpDesignerCore.Layout.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.Legacy.Bridge.Tests/LabelSharpDesignerCore.Legacy.Bridge.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.PrintTransport.Windows.Tests/LabelSharpDesignerCore.PrintTransport.Windows.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.Rendering.ArgoxPpla.Tests/LabelSharpDesignerCore.Rendering.ArgoxPpla.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.Rendering.Pdf.Tests/LabelSharpDesignerCore.Rendering.Pdf.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.Rendering.Png.Tests/LabelSharpDesignerCore.Rendering.Png.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.Serialization.Tests/LabelSharpDesignerCore.Serialization.Tests.csproj" />
+    <Project Path="tests/LabelSharpDesignerCore.UI.WinForms.Tests/LabelSharpDesignerCore.UI.WinForms.Tests.csproj" />
+  </Folder>
+</Solution>

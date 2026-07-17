@@ -1,6 +1,6 @@
-# Guia de integração — como usar o LabelSharpDesigner na sua aplicação
+# Guia de integração — como usar o LabelSharpDesignerCore na sua aplicação
 
-Este guia é para quem vai **consumir** o LabelSharpDesigner a partir de outra aplicação — não para
+Este guia é para quem vai **consumir** o LabelSharpDesignerCore a partir de outra aplicação — não para
 quem vai mexer no editor em si. Para entender como o pipeline interno funciona (por que só o
 `LayoutEngine` resolve layout, como Canvas/PDF/PPLA nunca divergem, etc.), veja
 [ARCHITECTURE.md](ARCHITECTURE.md). Aqui o foco é: "eu tenho uma aplicação com produtos/pedidos/
@@ -14,7 +14,7 @@ raster), veja [GUIA_RAPIDO_MODERNO.md](GUIA_RAPIDO_MODERNO.md) (Caminho A) ou
 [GUIA_RAPIDO_FRAMEWORK.md](GUIA_RAPIDO_FRAMEWORK.md) (Caminho B) em vez deste guia completo.
 
 Existe um exemplo completo e funcional no próprio repositório —
-[`src/LabelSharpDesigner.SampleApp`](src/LabelSharpDesigner.SampleApp) — que implementa
+[`src/LabelSharpDesignerCore.SampleApp`](src/LabelSharpDesignerCore.SampleApp) — que implementa
 exatamente o que este guia descreve, com um catálogo de produtos fictício no lugar da sua
 entidade de domínio. Todo trecho de código abaixo foi tirado (ou simplificado) direto dele; quando
 tiver dúvida, abra o projeto e compare.
@@ -24,11 +24,11 @@ tiver dúvida, abra o projeto e compare.
 | Sua aplicação é... | Caminho | Como |
 |---|---|---|
 | .NET moderno (net8+/net9, qualquer UI) rodando no mesmo processo/host Windows | **Caminho A — referência direta** | `ProjectReference` (ou pacote, se você empacotar as libs) para as libs que precisar |
-| ASP.NET Framework 4.x (ou qualquer coisa que não possa referenciar `net9.0-windows` diretamente) | **Caminho B — processo satélite** | `LabelSharpDesigner.Legacy.Bridge` + `LegacyLauncher` |
+| ASP.NET Framework 4.x (ou qualquer coisa que não possa referenciar `net9.0-windows` diretamente) | **Caminho B — processo satélite** | `LabelSharpDesignerCore.Legacy.Bridge` + `LegacyLauncher` |
 
 A diferença só importa para **abrir o editor visual**. Gerar/imprimir etiquetas a partir dos seus
 próprios dados (seção 4 em diante) é sempre feito em processo — se você está no Caminho B, essa
-parte roda dentro do `LabelSharpDesigner.App.exe` satélite, não na sua aplicação legada.
+parte roda dentro do `LabelSharpDesignerCore.App.exe` satélite, não na sua aplicação legada.
 
 ## 2. Caminho A — referência direta (aplicação .NET moderna)
 
@@ -39,35 +39,35 @@ Todo projeto de domínio/lógica multi-targeta `netstandard2.0;net9.0`; só a UI
 
 | Você precisa de... | Referencie |
 |---|---|
-| Modelo de documento (`LabelDocument`, `PageConfig`, ...) | `LabelSharpDesigner.Core` |
-| Carregar/salvar arquivos `.label` | `LabelSharpDesigner.Serialization` |
-| Resolver um documento para impressão/preview (`LayoutEngine`) | `LabelSharpDesigner.Layout` |
-| Renderizar (preview ao vivo, PNG, base do PPLA raster) | `LabelSharpDesigner.Rendering.Canvas` |
-| Exportar/imprimir em PDF | `LabelSharpDesigner.Rendering.Pdf` |
-| Exportar/imprimir em PPLA (impressoras térmicas Argox) | `LabelSharpDesigner.Rendering.ArgoxPpla` |
-| Enviar bytes para uma impressora Windows | `LabelSharpDesigner.PrintTransport.Windows` |
-| **Reaproveitar as telas prontas de biblioteca/editor de etiquetas** (`LibraryForm`, `EditorForm`, `LibraryRepository`) | `LabelSharpDesigner.App` |
+| Modelo de documento (`LabelDocument`, `PageConfig`, ...) | `LabelSharpDesignerCore.Core` |
+| Carregar/salvar arquivos `.label` | `LabelSharpDesignerCore.Serialization` |
+| Resolver um documento para impressão/preview (`LayoutEngine`) | `LabelSharpDesignerCore.Layout` |
+| Renderizar (preview ao vivo, PNG, base do PPLA raster) | `LabelSharpDesignerCore.Rendering.Canvas` |
+| Exportar/imprimir em PDF | `LabelSharpDesignerCore.Rendering.Pdf` |
+| Exportar/imprimir em PPLA (impressoras térmicas Argox) | `LabelSharpDesignerCore.Rendering.ArgoxPpla` |
+| Enviar bytes para uma impressora Windows | `LabelSharpDesignerCore.PrintTransport.Windows` |
+| **Reaproveitar as telas prontas de biblioteca/editor de etiquetas** (`LibraryForm`, `EditorForm`, `LibraryRepository`) | `LabelSharpDesignerCore.App` |
 
 Na prática, se você vai oferecer "cadastrar e imprimir etiquetas" como o `SampleApp` faz, referencie
 todos eles — veja
-[`LabelSharpDesigner.SampleApp.csproj`](src/LabelSharpDesigner.SampleApp/LabelSharpDesigner.SampleApp.csproj)
+[`LabelSharpDesignerCore.SampleApp.csproj`](src/LabelSharpDesignerCore.SampleApp/LabelSharpDesignerCore.SampleApp.csproj)
 como modelo pronto de `ItemGroup`. Seu projeto precisa ser `net9.0-windows10.0.19041.0` com
 `UseWindowsForms=true` para poder referenciar `App`/`Rendering.Canvas`/`PrintTransport.Windows`.
 
-> Sim, dá para referenciar o projeto `LabelSharpDesigner.App` (que é `OutputType=WinExe`) como
+> Sim, dá para referenciar o projeto `LabelSharpDesignerCore.App` (que é `OutputType=WinExe`) como
 > qualquer outra lib — o `Main` dele só roda se você chamar; sua aplicação continua dona do próprio
 > `Program.Main`.
 
 ### 2.2 Tela de "gerenciar etiquetas" — não reimplemente, reaproveite
 
-`LabelSharpDesigner.App.Library.LibraryForm` já é a tela completa de listar/criar/editar/duplicar/
+`LabelSharpDesignerCore.App.Library.LibraryForm` já é a tela completa de listar/criar/editar/duplicar/
 excluir/exportar/imprimir etiquetas `.label`, com undo/redo e tudo mais do editor por trás. Não
 existe motivo para reconstruir isso — basta abrir a tela com um `LibraryRepository`:
 
 ```csharp
-using LabelSharpDesigner.App.Library;
+using LabelSharpDesignerCore.App.Library;
 
-var labelRepository = LibraryRepository.Open(); // %APPDATA%\LabelSharpDesigner\Labels
+var labelRepository = LibraryRepository.Open(); // %APPDATA%\LabelSharpDesignerCore\Labels
 new LibraryForm(labelRepository).ShowDialog(this);
 ```
 
@@ -113,7 +113,7 @@ aplicação que faz essa ponte, e o jeito recomendado (implementado no `SampleAp
 
 2. **Uma tela de vínculo, montada dinamicamente a partir de `document.Variables`** — uma linha por
    variável que a etiqueta *atualmente* declara, cada uma com um combo escolhendo a origem. Veja
-   [`VariableMappingForm`](src/LabelSharpDesigner.SampleApp/Printing/VariableMappingForm.cs)
+   [`VariableMappingForm`](src/LabelSharpDesignerCore.SampleApp/Printing/VariableMappingForm.cs)
    na íntegra; o miolo é só isto:
 
    ```csharp
@@ -135,7 +135,7 @@ aplicação que faz essa ponte, e o jeito recomendado (implementado no `SampleAp
    ```
 
    Veja
-   [`VariableFieldMappingStore`](src/LabelSharpDesigner.SampleApp/Printing/VariableFieldMappingStore.cs)
+   [`VariableFieldMappingStore`](src/LabelSharpDesignerCore.SampleApp/Printing/VariableFieldMappingStore.cs)
    — carregar/salvar com `try/catch` silencioso (arquivo ausente ou corrompido nunca deve travar a
    tela), igual ao resto das preferências de app deste projeto.
 
@@ -173,7 +173,7 @@ Reaproveite `LabelCanvasRenderer` (o mesmo desenho usado no export/impressão de
 diverge) dentro de um `SKControl`:
 
 ```csharp
-using LabelSharpDesigner.Rendering.Canvas;
+using LabelSharpDesignerCore.Rendering.Canvas;
 using SkiaSharp.Views.Desktop;
 
 // Copie LabelPreviewControl.cs do SampleApp — é internal no assembly App, então não dá
@@ -189,7 +189,7 @@ Sua tela de impressão sempre trabalha em modo lote — mesmo para "uma etiqueta
 porque no fim das contas você está imprimindo N registros, um por etiqueta física:
 
 ```csharp
-using LabelSharpDesigner.Layout;
+using LabelSharpDesignerCore.Layout;
 
 var layoutEngine = new LayoutEngine();
 var document = entry.Document with { Page = entry.Document.Page with { Columns = colunasEscolhidas } };
@@ -251,7 +251,7 @@ internal static class MinhasPreferenciasStore
 ## 3. Caminho B — aplicação legada (ASP.NET Framework / .NET Framework 4.x)
 
 Se a sua aplicação não pode referenciar `net9.0-windows` diretamente, ela abre o
-`LabelSharpDesigner.App.exe` como processo satélite só para editar **um** arquivo `.label` por vez
+`LabelSharpDesignerCore.App.exe` como processo satélite só para editar **um** arquivo `.label` por vez
 — sem a biblioteca inteira, sem as telas de produto/impressão em lote deste guia (essas continuam
 sendo responsabilidade da sua própria aplicação, chamando o satélite só pela parte visual do
 editor). Esta seção é o passo a passo completo para quando você só quer **a tela de desenhar a
@@ -279,30 +279,30 @@ ver o editor.
 
 Os passos abaixo assumem o primeiro cenário.
 
-### 3.1 Publique o `LabelSharpDesigner.App.exe`
+### 3.1 Publique o `LabelSharpDesignerCore.App.exe`
 
 ```powershell
-dotnet publish src/LabelSharpDesigner.App -c Release -r win-x64 --self-contained false
+dotnet publish src/LabelSharpDesignerCore.App -c Release -r win-x64 --self-contained false
 ```
 
-Copie a pasta de saída (`LabelSharpDesigner.App.exe` + DLLs ao lado) para um caminho fixo acessível
-pela sua aplicação — por exemplo `C:\LabelSharpDesigner\LabelSharpDesigner.App.exe`. Esse caminho é
+Copie a pasta de saída (`LabelSharpDesignerCore.App.exe` + DLLs ao lado) para um caminho fixo acessível
+pela sua aplicação — por exemplo `C:\LabelSharpDesignerCore\LabelSharpDesignerCore.App.exe`. Esse caminho é
 inteiramente decisão sua (rede, `Program Files`, o que fizer sentido no seu ambiente).
 
 ### 3.2 Compile e referencie o `Legacy.Bridge`
 
 ```powershell
-dotnet build src/LabelSharpDesigner.Legacy.Bridge -f netstandard2.0 -c Release
+dotnet build src/LabelSharpDesignerCore.Legacy.Bridge -f netstandard2.0 -c Release
 ```
 
-Isso gera `src/LabelSharpDesigner.Legacy.Bridge/bin/Release/netstandard2.0/LabelSharpDesigner.Legacy.Bridge.dll`
+Isso gera `src/LabelSharpDesignerCore.Legacy.Bridge/bin/Release/netstandard2.0/LabelSharpDesignerCore.Legacy.Bridge.dll`
 — sem nenhuma dependência externa (só BCL), então basta referenciar essa única DLL no seu projeto
 ASP.NET Framework:
 
 ```xml
 <!-- no .csproj do projeto ASP.NET Framework (formato clássico) -->
-<Reference Include="LabelSharpDesigner.Legacy.Bridge">
-  <HintPath>C:\LabelSharpDesigner\LabelSharpDesigner.Legacy.Bridge.dll</HintPath>
+<Reference Include="LabelSharpDesignerCore.Legacy.Bridge">
+  <HintPath>C:\LabelSharpDesignerCore\LabelSharpDesignerCore.Legacy.Bridge.dll</HintPath>
 </Reference>
 ```
 
@@ -319,8 +319,8 @@ rede — o `LegacyLauncher` aceita qualquer caminho absoluto). Se o arquivo aind
 documento em branco antes de chamar o editor:
 
 ```csharp
-using LabelSharpDesigner.Core.Document;
-using LabelSharpDesigner.Serialization;
+using LabelSharpDesignerCore.Core.Document;
+using LabelSharpDesignerCore.Serialization;
 
 if (!File.Exists(caminhoDoLabel))
 {
@@ -334,7 +334,7 @@ if (!File.Exists(caminhoDoLabel))
 }
 ```
 
-(`LabelSharpDesigner.Core`/`Serialization` também são `netstandard2.0` — podem ser referenciados do
+(`LabelSharpDesignerCore.Core`/`Serialization` também são `netstandard2.0` — podem ser referenciados do
 mesmo jeito, se você quiser montar/ler o documento sem abrir o editor. Ver [USAGE.md §2/§8](USAGE.md).)
 
 ### 3.4 Chame o editor
@@ -343,9 +343,9 @@ mesmo jeito, se você quiser montar/ler o documento sem abrir o editor. Ver [USA
 passo 3.1:
 
 ```csharp
-using LabelSharpDesigner.Legacy.Bridge;
+using LabelSharpDesignerCore.Legacy.Bridge;
 
-var launcher = new LegacyLauncher(@"C:\LabelSharpDesigner\LabelSharpDesigner.App.exe");
+var launcher = new LegacyLauncher(@"C:\LabelSharpDesignerCore\LabelSharpDesignerCore.App.exe");
 var request = new LaunchRequest { FilePath = caminhoDoLabel, ReadOnly = false };
 LaunchResult result = launcher.Launch(request); // bloqueia até o usuário fechar a janela do editor
 
@@ -368,7 +368,7 @@ switch (result.Outcome)
 ```csharp
 public class EtiquetaController : Controller
 {
-    private const string AppExePath = @"C:\LabelSharpDesigner\LabelSharpDesigner.App.exe";
+    private const string AppExePath = @"C:\LabelSharpDesignerCore\LabelSharpDesignerCore.App.exe";
 
     [HttpPost]
     public ActionResult Desenhar(int produtoId)
@@ -410,8 +410,8 @@ Pra mostrar um preview no seu grid/lista sem instanciar nenhuma UI, resolva e ex
 diretamente (`Core`/`Layout`/`Rendering.Png`, todos `netstandard2.0`):
 
 ```csharp
-using LabelSharpDesigner.Layout;
-using LabelSharpDesigner.Rendering.Png;
+using LabelSharpDesignerCore.Layout;
+using LabelSharpDesignerCore.Rendering.Png;
 
 var documento = LabelDocumentCodec.Load(File.ReadAllText(caminhoDoLabel));
 var amostra = documento.Variables.ToDictionary(v => v.Name, object? (v) => v.DefaultValue);
@@ -423,7 +423,7 @@ byte[] png = PngExporter.ExportScaled(resolvido, targetWidthPx: 240);
 
 - [ ] O código que chama `LegacyLauncher.Launch` roda numa sessão de desktop interativa da máquina
       do usuário (3.0) — não num IIS de produção atendendo clientes remotos.
-- [ ] `LabelSharpDesigner.App.exe` está publicado (3.1) num caminho que o processo da sua aplicação
+- [ ] `LabelSharpDesignerCore.App.exe` está publicado (3.1) num caminho que o processo da sua aplicação
       consegue alcançar.
 - [ ] Você referenciou só a DLL `netstandard2.0` do `Legacy.Bridge` — nada de `net9.0-windows`, isso
       nunca compilaria contra .NET Framework.

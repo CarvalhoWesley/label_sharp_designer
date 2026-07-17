@@ -1,8 +1,0 @@
-namespace LabelSharpDesigner.Rendering.Png;
-
-public enum PngScale
-{
-    X1 = 1,
-    X2 = 2,
-    X3 = 3,
-}

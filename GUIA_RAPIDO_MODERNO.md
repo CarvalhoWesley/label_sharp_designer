@@ -5,7 +5,7 @@ com só o essencial: **implementar o editor**, **gerenciar as etiquetas criadas*
 com as três decisões de produto abaixo fixadas em código (não são opção do usuário final). Para
 detalhes/casos de borda (vínculo de campos dinâmico, mala direta, preferências de app etc.) volte
 para [INTEGRATION.md](INTEGRATION.md) e [USAGE.md](USAGE.md). Existe um exemplo funcionando de ponta
-a ponta em [`src/LabelSharpDesigner.SampleApp`](src/LabelSharpDesigner.SampleApp) — todo trecho
+a ponta em [`src/LabelSharpDesignerCore.SampleApp`](src/LabelSharpDesignerCore.SampleApp) — todo trecho
 abaixo foi tirado (ou simplificado) direto dele.
 
 Vale para qualquer aplicação .NET moderna (mesmo TFM do próprio plugin — hoje `net9.0-windows`) que
@@ -23,9 +23,9 @@ roda no mesmo processo/host Windows, sem precisar do processo satélite do
 ## Passo 1 — Referenciar os projetos
 
 Seu projeto precisa ser `net9.0-windows10.0.19041.0` com `UseWindowsForms=true`. Referencie
-`LabelSharpDesigner.App` (traz tudo — telas prontas, `Layout`, `Rendering.*`,
+`LabelSharpDesignerCore.App` (traz tudo — telas prontas, `Layout`, `Rendering.*`,
 `PrintTransport.Windows` — como dependências transitivas). Ver
-[`LabelSharpDesigner.SampleApp.csproj`](src/LabelSharpDesigner.SampleApp/LabelSharpDesigner.SampleApp.csproj)
+[`LabelSharpDesignerCore.SampleApp.csproj`](src/LabelSharpDesignerCore.SampleApp/LabelSharpDesignerCore.SampleApp.csproj)
 como modelo pronto.
 
 ## Passo 2 — Nova etiqueta (documento em branco)
@@ -34,9 +34,9 @@ como modelo pronto.
 [USAGE.md §2](USAGE.md#2-modelo-de-documento-core) — nenhum código extra necessário:
 
 ```csharp
-using LabelSharpDesigner.App.Library;
+using LabelSharpDesignerCore.App.Library;
 
-var labelRepository = LibraryRepository.Open(); // %APPDATA%\LabelSharpDesigner\Labels
+var labelRepository = LibraryRepository.Open(); // %APPDATA%\LabelSharpDesignerCore\Labels
 var entry = labelRepository.Create(); // documento em branco, 100×60mm/203dpi por padrão
 ```
 
@@ -46,8 +46,8 @@ var entry = labelRepository.Create(); // documento em branco, 100×60mm/203dpi p
 `allowedElementKinds` e `showLayersPanel`:
 
 ```csharp
-using LabelSharpDesigner.App;
-using LabelSharpDesigner.App.Library;
+using LabelSharpDesignerCore.App;
+using LabelSharpDesignerCore.App.Library;
 
 private static readonly NewElementKind[] ElementosPermitidos =
     [NewElementKind.Text, NewElementKind.Line, NewElementKind.Barcode, NewElementKind.QrCode, NewElementKind.Image];
@@ -96,7 +96,7 @@ printDialog.ShowDialog(this);
 ```
 
 Se você monta sua própria tela de impressão em lote em vez de reaproveitar `PrintDialogForm` (como o
-[`PrintProductsForm`](src/LabelSharpDesigner.SampleApp/Printing/PrintProductsForm.cs) do exemplo, que
+[`PrintProductsForm`](src/LabelSharpDesignerCore.SampleApp/Printing/PrintProductsForm.cs) do exemplo, que
 imprime vários produtos de uma vez), aplique o mesmo padrão no seu combo de formato:
 
 ```csharp
@@ -110,9 +110,9 @@ direto e envie os bytes — ver
 [INTEGRATION.md §2.6](INTEGRATION.md#26-resolvendo-em-lote-e-imprimindo):
 
 ```csharp
-using LabelSharpDesigner.Layout;
-using LabelSharpDesigner.Rendering.ArgoxPpla;
-using LabelSharpDesigner.PrintTransport.Windows;
+using LabelSharpDesignerCore.Layout;
+using LabelSharpDesignerCore.Rendering.ArgoxPpla;
+using LabelSharpDesignerCore.PrintTransport.Windows;
 
 var fileiras = new LayoutEngine().ResolveBatch(entry.Document, registros);
 var opcoes = new ArgoxRendererOptions { Darkness = 10, TransferType = ArgoxTransferType.ThermalTransfer };

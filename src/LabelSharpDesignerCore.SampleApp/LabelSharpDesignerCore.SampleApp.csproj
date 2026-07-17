@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\LabelSharpDesignerCore.Core\LabelSharpDesignerCore.Core.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Layout\LabelSharpDesignerCore.Layout.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Serialization\LabelSharpDesignerCore.Serialization.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.Canvas\LabelSharpDesignerCore.Rendering.Canvas.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.Pdf\LabelSharpDesignerCore.Rendering.Pdf.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.ArgoxPpla\LabelSharpDesignerCore.Rendering.ArgoxPpla.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.PrintTransport.Windows\LabelSharpDesignerCore.PrintTransport.Windows.csproj" />
+    <!-- Reused directly for the "Etiquetas" screen: LibraryForm/EditorForm/LibraryRepository already
+         implement label listing/creation/editing — no need to reimplement them here. -->
+    <ProjectReference Include="..\LabelSharpDesignerCore.App\LabelSharpDesignerCore.App.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon />
+    <NoWarn>$(NoWarn);WFO5001</NoWarn>
+    <!-- Same policy exemption Directory.Build.props already grants LabelSharpDesignerCore.App: a
+         WinForms host app, not a domain/logic library. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

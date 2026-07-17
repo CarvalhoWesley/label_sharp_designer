@@ -5,12 +5,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>G3Soft</Company>
-    <Product>LabelSharpDesigner</Product>
+    <Product>LabelSharpDesignerCore</Product>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <!-- Domain/logic projects (not UI, not App, not test projects) build warning-free by policy. -->
-  <PropertyGroup Condition="!$(MSBuildProjectName.Contains('.Tests')) AND '$(MSBuildProjectName)' != 'LabelSharpDesigner.UI.WinForms' AND '$(MSBuildProjectName)' != 'LabelSharpDesigner.App'">
+  <PropertyGroup Condition="!$(MSBuildProjectName.Contains('.Tests')) AND '$(MSBuildProjectName)' != 'LabelSharpDesignerCore.UI.WinForms' AND '$(MSBuildProjectName)' != 'LabelSharpDesignerCore.App'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 

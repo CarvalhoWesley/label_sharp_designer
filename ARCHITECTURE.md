@@ -1,6 +1,6 @@
-# Arquitetura — LabelSharpDesigner
+# Arquitetura — LabelSharpDesignerCore
 
-LabelSharpDesigner é uma recriação em .NET 9 / C# / WinForms do produto Flutter
+LabelSharpDesignerCore é uma recriação em .NET 9 / C# / WinForms do produto Flutter
 `flutter_label_designer`: um editor de etiquetas (documento → elementos →
 layout → renderização → impressão), pensado para ser referenciado por uma
 solução legada ASP.NET Framework 4.x como um app satélite (ver
@@ -14,9 +14,9 @@ o mesmo contrato do projeto Flutter original (`docs/ARCHITECTURE.md` lá,
 seções 1–2 e 9) e é o que garante que Canvas, PNG, PDF e PPLA nunca divergem
 entre si.
 
-Se você está integrando o LabelSharpDesigner a partir de **outra aplicação** (em vez de mexer no
+Se você está integrando o LabelSharpDesignerCore a partir de **outra aplicação** (em vez de mexer no
 editor em si), veja [INTEGRATION.md](INTEGRATION.md) — um guia de consumo, com exemplo completo em
-`src/LabelSharpDesigner.SampleApp` — ou [USAGE.md](USAGE.md), a referência objetiva de toda a API
+`src/LabelSharpDesignerCore.SampleApp` — ou [USAGE.md](USAGE.md), a referência objetiva de toda a API
 (modelo de documento, elementos, variáveis, resolução, exportação, impressão).
 
 ## 1. Visão geral do pipeline
@@ -71,21 +71,21 @@ não o canvas.
 
 | Projeto | TFM | Depende de | Responsabilidade |
 |---|---|---|---|
-| `LabelSharpDesigner.Core` | `netstandard2.0;net9.0` | — | Modelo de domínio (`LabelDocument`, `LabelElement` + subtipos, `PageConfig`, `LabelStyle`/`LabelLayer`/`LabelVariable`, `EditorSettings`) **e** os tipos de saída do layout (`ResolvedDocument`/`ResolvedElement`/`ResolvedPayload`) — mesma colocação do `label_core` original. |
-| `LabelSharpDesigner.Expressions` | `netstandard2.0;net9.0` | — | Lexer → parser (AST) → evaluator de expressões `{{ }}`, zero dependências (nem de `Core`). `TemplateResolver` resolve placeholders embutidos em texto livre. |
-| `LabelSharpDesigner.Layout` | `netstandard2.0;net9.0` | `Core`, `Expressions` | `LayoutEngine.Resolve` (um documento) e `.ResolveBatch` (mala direta/colunas — ver [§5](#5-impressão-em-colunas--mala-direta)). Único lugar que converte mm→dots e avalia expressões contra dados de amostra. |
-| `LabelSharpDesigner.Serialization` | `netstandard2.0;net9.0` | `Core` | Codec JSON versionado (`LabelDocumentCodec`), conversor polimórfico por tipo de `LabelElement`, `MigrationChain`/`IMigration` para versões antigas de `.label`. |
-| `LabelSharpDesigner.Barcode` | `netstandard2.0;net9.0` | `Core` | Adapter sobre ZXing.Net — gera **só o raster dos módulos/barras**, sem nenhuma capacidade de desenhar texto humano-legível (ver [§4](#4-texto-legível-em-código-de-barras)). |
-| `LabelSharpDesigner.History` | `netstandard2.0;net9.0` | `Core` | Command pattern imutável: `AddCommand`, `DeleteCommand`, `MoveCommand`, `ResizeCommand`, `RotateCommand`, `ChangePropertyCommand`, `ChangeDocumentCommand`, `CompositeCommand`. `HistoryManager` mantém as pilhas undo/redo. |
-| `LabelSharpDesigner.Rendering.Abstractions` | `netstandard2.0;net9.0` | `Core` | `IResolvedPayloadVisitor<TResult>` — o contrato que Canvas/Pdf implementam para despachar sobre `ResolvedPayload`. |
-| `LabelSharpDesigner.Rendering.Canvas` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Barcode` | **A única rotina de desenho "de verdade"** (SkiaSharp `SKCanvas`) — reusada por preview, PNG e raster PPLA. `TextDrawing` (com quebra de linha), `ShapeDrawing`, `TableDrawing`, `ImageDrawing`. |
-| `LabelSharpDesigner.Rendering.Png` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Rendering.Canvas` | `PngExporter` — `Rendering.Canvas` para um `SKBitmap` em 1×/2×/3× ou largura customizada. |
-| `LabelSharpDesigner.Rendering.Pdf` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Barcode` | `PdfExporter` (PdfSharp) — texto vetorial real via `XGraphics`/`XFont`, com quebra de linha própria (não compartilha código com `Rendering.Canvas`, ver [§8](#8-convenções-e-pegadinhas)). |
-| `LabelSharpDesigner.Rendering.ArgoxPpla` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Rendering.Canvas`, `Barcode` | `PplaCommandBuilder` (comandos PPLA nativos por elemento) e `PplaRasterBuilder` (rasteriza via `Rendering.Canvas` e envia como imagem monocromática) para impressoras térmicas Argox. |
-| `LabelSharpDesigner.PrintTransport.Windows` | `net9.0-windows` | — | Envio de bytes para a impressora: `WindowsRawPrintTransport` (P/Invoke em `winspool.drv`, equivalente ao `RawPrinterHelper` clássico) para PPLA cru, `WindowsPdfPrintTransport` para PDF via driver, `WindowsPrinterDiscovery`. |
-| `LabelSharpDesigner.UI.WinForms` | `net9.0-windows10.0.19041.0` | `Core`, `Layout`, `Expressions`, `History`, `Rendering.Canvas` | `LabelCanvasControl` (superfície interativa), `PropertyPanel`, `LayersPanel`, `RulerControl`, `AlignmentSnap`. |
-| `LabelSharpDesigner.App` | `net9.0-windows10.0.19041.0` (`WinExe`) | quase todos os projetos acima + `Legacy.Bridge` | Composition root: `Program.cs`, `LibraryForm`, `EditorForm`, `ExportDialogForm`, `PrintDialogForm`, `PageSettingsForm`, `LibraryRepository`, configurações de app (`PrintSettings*`, `EditorLayoutSettings*`). |
-| `LabelSharpDesigner.Legacy.Bridge` | `netstandard2.0;net9.0` | — | DTOs `LaunchRequest`/`LaunchResult`/`LaunchOutcome` e `LegacyLauncher`, o contrato usado pelo ASP.NET Framework legado para iniciar o `App` como processo satélite (ver [§7](#7-integração-com-o-legado--labelsharpdesignerlegacybridge)). |
+| `LabelSharpDesignerCore.Core` | `netstandard2.0;net9.0` | — | Modelo de domínio (`LabelDocument`, `LabelElement` + subtipos, `PageConfig`, `LabelStyle`/`LabelLayer`/`LabelVariable`, `EditorSettings`) **e** os tipos de saída do layout (`ResolvedDocument`/`ResolvedElement`/`ResolvedPayload`) — mesma colocação do `label_core` original. |
+| `LabelSharpDesignerCore.Expressions` | `netstandard2.0;net9.0` | — | Lexer → parser (AST) → evaluator de expressões `{{ }}`, zero dependências (nem de `Core`). `TemplateResolver` resolve placeholders embutidos em texto livre. |
+| `LabelSharpDesignerCore.Layout` | `netstandard2.0;net9.0` | `Core`, `Expressions` | `LayoutEngine.Resolve` (um documento) e `.ResolveBatch` (mala direta/colunas — ver [§5](#5-impressão-em-colunas--mala-direta)). Único lugar que converte mm→dots e avalia expressões contra dados de amostra. |
+| `LabelSharpDesignerCore.Serialization` | `netstandard2.0;net9.0` | `Core` | Codec JSON versionado (`LabelDocumentCodec`), conversor polimórfico por tipo de `LabelElement`, `MigrationChain`/`IMigration` para versões antigas de `.label`. |
+| `LabelSharpDesignerCore.Barcode` | `netstandard2.0;net9.0` | `Core` | Adapter sobre ZXing.Net — gera **só o raster dos módulos/barras**, sem nenhuma capacidade de desenhar texto humano-legível (ver [§4](#4-texto-legível-em-código-de-barras)). |
+| `LabelSharpDesignerCore.History` | `netstandard2.0;net9.0` | `Core` | Command pattern imutável: `AddCommand`, `DeleteCommand`, `MoveCommand`, `ResizeCommand`, `RotateCommand`, `ChangePropertyCommand`, `ChangeDocumentCommand`, `CompositeCommand`. `HistoryManager` mantém as pilhas undo/redo. |
+| `LabelSharpDesignerCore.Rendering.Abstractions` | `netstandard2.0;net9.0` | `Core` | `IResolvedPayloadVisitor<TResult>` — o contrato que Canvas/Pdf implementam para despachar sobre `ResolvedPayload`. |
+| `LabelSharpDesignerCore.Rendering.Canvas` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Barcode` | **A única rotina de desenho "de verdade"** (SkiaSharp `SKCanvas`) — reusada por preview, PNG e raster PPLA. `TextDrawing` (com quebra de linha), `ShapeDrawing`, `TableDrawing`, `ImageDrawing`. |
+| `LabelSharpDesignerCore.Rendering.Png` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Rendering.Canvas` | `PngExporter` — `Rendering.Canvas` para um `SKBitmap` em 1×/2×/3× ou largura customizada. |
+| `LabelSharpDesignerCore.Rendering.Pdf` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Barcode` | `PdfExporter` (PdfSharp) — texto vetorial real via `XGraphics`/`XFont`, com quebra de linha própria (não compartilha código com `Rendering.Canvas`, ver [§8](#8-convenções-e-pegadinhas)). |
+| `LabelSharpDesignerCore.Rendering.ArgoxPpla` | `netstandard2.0;net9.0` | `Core`, `Rendering.Abstractions`, `Rendering.Canvas`, `Barcode` | `PplaCommandBuilder` (comandos PPLA nativos por elemento) e `PplaRasterBuilder` (rasteriza via `Rendering.Canvas` e envia como imagem monocromática) para impressoras térmicas Argox. |
+| `LabelSharpDesignerCore.PrintTransport.Windows` | `net9.0-windows` | — | Envio de bytes para a impressora: `WindowsRawPrintTransport` (P/Invoke em `winspool.drv`, equivalente ao `RawPrinterHelper` clássico) para PPLA cru, `WindowsPdfPrintTransport` para PDF via driver, `WindowsPrinterDiscovery`. |
+| `LabelSharpDesignerCore.UI.WinForms` | `net9.0-windows10.0.19041.0` | `Core`, `Layout`, `Expressions`, `History`, `Rendering.Canvas` | `LabelCanvasControl` (superfície interativa), `PropertyPanel`, `LayersPanel`, `RulerControl`, `AlignmentSnap`. |
+| `LabelSharpDesignerCore.App` | `net9.0-windows10.0.19041.0` (`WinExe`) | quase todos os projetos acima + `Legacy.Bridge` | Composition root: `Program.cs`, `LibraryForm`, `EditorForm`, `ExportDialogForm`, `PrintDialogForm`, `PageSettingsForm`, `LibraryRepository`, configurações de app (`PrintSettings*`, `EditorLayoutSettings*`). |
+| `LabelSharpDesignerCore.Legacy.Bridge` | `netstandard2.0;net9.0` | — | DTOs `LaunchRequest`/`LaunchResult`/`LaunchOutcome` e `LegacyLauncher`, o contrato usado pelo ASP.NET Framework legado para iniciar o `App` como processo satélite (ver [§7](#7-integração-com-o-legado--labelsharpdesignerlegacybridge)). |
 
 Todo projeto de domínio/lógica multi-targeta `netstandard2.0;net9.0` — isso é
 o que permite o legado ASP.NET Framework 4.x referenciar `Core`,
@@ -186,7 +186,7 @@ Flutter original controle a controle.
   layout foge das capacidades nativas do firmware PPLA.
 - **PNG**: `Rendering.Png.PngExporter`, 1×/2×/3× ou largura customizada.
 
-## 7. Integração com o legado — `LabelSharpDesigner.Legacy.Bridge`
+## 7. Integração com o legado — `LabelSharpDesignerCore.Legacy.Bridge`
 
 O app legado ASP.NET Framework 4.x não pode referenciar o `App` WinForms
 `net9.0-windows` diretamente (frameworks incompatíveis), então a integração é
@@ -194,7 +194,7 @@ via processo satélite:
 
 1. O legado referencia `Legacy.Bridge` (`netstandard2.0`, compatível com
    Framework 4.x) e usa `LegacyLauncher` para montar um `Process.Start` do
-   `LabelSharpDesigner.App.exe` com `--edit <path> [--readonly]`.
+   `LabelSharpDesignerCore.App.exe` com `--edit <path> [--readonly]`.
 2. `Program.Main` detecta esses argumentos via `LaunchRequest.TryParse` e
    entra em **modo de edição direta** (`RunEditMode`): abre o `EditorForm`
    sobre aquele arquivo, ignorando a biblioteca inteira.
@@ -204,7 +204,7 @@ via processo satélite:
 
 Sem argumentos, `Program.Main` entra em **modo biblioteca**
 (`RunLibraryMode`): abre `LibraryForm` sobre `LibraryRepository`
-(`%APPDATA%\LabelSharpDesigner\Labels`), com troca de tema
+(`%APPDATA%\LabelSharpDesignerCore\Labels`), com troca de tema
 claro/escuro/sistema reabrindo a janela (repintar tema ao vivo não funciona
 de forma confiável em controles WinForms já na tela).
 
@@ -247,7 +247,7 @@ saber antes de mexer no editor:
 - **Configurações de app vs. configurações do documento**: preferências
   como impressora/formato/última quantidade usada (`PrintSettings`) e
   tamanho/visibilidade dos painéis (`EditorLayoutSettings`) ficam em
-  `%APPDATA%\LabelSharpDesigner\*.json` — são sobre *como você usa o app*,
+  `%APPDATA%\LabelSharpDesignerCore\*.json` — são sobre *como você usa o app*,
   não sobre o documento. Grade/snap/guias, ao contrário, ficam dentro do
   próprio `LabelDocument.EditorSettings` porque são parte do documento.
 

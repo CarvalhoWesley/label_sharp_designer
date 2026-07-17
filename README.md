@@ -1,6 +1,6 @@
-# LabelSharpDesigner
+# LabelSharpDesignerCore
 
-LabelSharpDesigner é um **editor de etiquetas** (como as de código de barras, preço, endereço etc.)
+LabelSharpDesignerCore é um **editor de etiquetas** (como as de código de barras, preço, endereço etc.)
 escrito em .NET 9 / C# / WinForms. Com ele dá para desenhar uma etiqueta visualmente (texto, código
 de barras, QR code, imagens, tabelas...), salvar esse desenho como um arquivo `.label`, e depois usar
 esse arquivo para gerar PNG, PDF ou mandar direto para uma impressora térmica.
@@ -16,13 +16,13 @@ dinamicamente com dados reais (nome do produto, preço, código de barras) na ho
   ele faz.
 - Quer entender o **pipeline interno** (como um documento vira etiqueta impressa)? Veja
   [ARCHITECTURE.md](ARCHITECTURE.md).
-- Quer **usar** o LabelSharpDesigner a partir de outra aplicação .NET? Veja
+- Quer **usar** o LabelSharpDesignerCore a partir de outra aplicação .NET? Veja
   [INTEGRATION.md](INTEGRATION.md) (passo a passo completo) e [USAGE.md](USAGE.md) (referência de
   API). Para um passo a passo curto e direto (implementar o editor, gerenciar etiquetas, imprimir),
   veja [GUIA_RAPIDO_MODERNO.md](GUIA_RAPIDO_MODERNO.md) (.NET moderno) ou
   [GUIA_RAPIDO_FRAMEWORK.md](GUIA_RAPIDO_FRAMEWORK.md) (.NET Framework 4.x).
 - Quer ver um exemplo funcionando de ponta a ponta? Abra
-  [`src/LabelSharpDesigner.SampleApp`](src/LabelSharpDesigner.SampleApp).
+  [`src/LabelSharpDesignerCore.SampleApp`](src/LabelSharpDesignerCore.SampleApp).
 
 ## Como o desenho vira etiqueta impressa (resumo)
 
@@ -42,30 +42,30 @@ diferentes entre si.
 
 | Projeto | Em uma frase | README |
 |---|---|---|
-| `LabelSharpDesigner.Core` | O modelo de dados: o que é uma etiqueta, o que é um elemento de texto/código de barras/etc. | [src/LabelSharpDesigner.Core](src/LabelSharpDesigner.Core/README.md) |
-| `LabelSharpDesigner.Expressions` | Motor que entende e calcula `{{ expressões }}` dentro dos textos. | [src/LabelSharpDesigner.Expressions](src/LabelSharpDesigner.Expressions/README.md) |
-| `LabelSharpDesigner.Layout` | Transforma o desenho (mm, expressões) em coordenadas prontas em pixels. | [src/LabelSharpDesigner.Layout](src/LabelSharpDesigner.Layout/README.md) |
-| `LabelSharpDesigner.Serialization` | Salva e carrega arquivos `.label` (JSON versionado). | [src/LabelSharpDesigner.Serialization](src/LabelSharpDesigner.Serialization/README.md) |
-| `LabelSharpDesigner.Barcode` | Gera o desenho (raster) de códigos de barras. | [src/LabelSharpDesigner.Barcode](src/LabelSharpDesigner.Barcode/README.md) |
-| `LabelSharpDesigner.History` | Undo/redo do editor. | [src/LabelSharpDesigner.History](src/LabelSharpDesigner.History/README.md) |
-| `LabelSharpDesigner.Rendering.Abstractions` | Contrato comum usado pelos "desenhadores" (renderers). | [src/LabelSharpDesigner.Rendering.Abstractions](src/LabelSharpDesigner.Rendering.Abstractions/README.md) |
-| `LabelSharpDesigner.Rendering.Canvas` | O "desenhador" principal (SkiaSharp) — usado no preview, no PNG e na impressão raster. | [src/LabelSharpDesigner.Rendering.Canvas](src/LabelSharpDesigner.Rendering.Canvas/README.md) |
-| `LabelSharpDesigner.Rendering.Png` | Exporta a etiqueta como imagem PNG. | [src/LabelSharpDesigner.Rendering.Png](src/LabelSharpDesigner.Rendering.Png/README.md) |
-| `LabelSharpDesigner.Rendering.Pdf` | Exporta a etiqueta como PDF vetorial. | [src/LabelSharpDesigner.Rendering.Pdf](src/LabelSharpDesigner.Rendering.Pdf/README.md) |
-| `LabelSharpDesigner.Rendering.ArgoxPpla` | Gera os comandos para impressoras térmicas Argox (PPLA). | [src/LabelSharpDesigner.Rendering.ArgoxPpla](src/LabelSharpDesigner.Rendering.ArgoxPpla/README.md) |
-| `LabelSharpDesigner.PrintTransport.Windows` | Manda os bytes (PDF ou PPLA) para a impressora de verdade. | [src/LabelSharpDesigner.PrintTransport.Windows](src/LabelSharpDesigner.PrintTransport.Windows/README.md) |
-| `LabelSharpDesigner.UI.WinForms` | Os controles visuais reutilizáveis do editor (a área de desenho, painéis). | [src/LabelSharpDesigner.UI.WinForms](src/LabelSharpDesigner.UI.WinForms/README.md) |
-| `LabelSharpDesigner.App` | O aplicativo final: telas prontas de biblioteca, editor, exportação e impressão. | [src/LabelSharpDesigner.App](src/LabelSharpDesigner.App/README.md) |
-| `LabelSharpDesigner.Legacy.Bridge` | Ponte para sistemas antigos (.NET Framework 4.x) abrirem o editor como programa separado. | [src/LabelSharpDesigner.Legacy.Bridge](src/LabelSharpDesigner.Legacy.Bridge/README.md) |
-| `LabelSharpDesigner.SampleApp` | Aplicativo de exemplo mostrando como integrar tudo isso num sistema próprio. | [src/LabelSharpDesigner.SampleApp](src/LabelSharpDesigner.SampleApp/README.md) |
+| `LabelSharpDesignerCore.Core` | O modelo de dados: o que é uma etiqueta, o que é um elemento de texto/código de barras/etc. | [src/LabelSharpDesignerCore.Core](src/LabelSharpDesignerCore.Core/README.md) |
+| `LabelSharpDesignerCore.Expressions` | Motor que entende e calcula `{{ expressões }}` dentro dos textos. | [src/LabelSharpDesignerCore.Expressions](src/LabelSharpDesignerCore.Expressions/README.md) |
+| `LabelSharpDesignerCore.Layout` | Transforma o desenho (mm, expressões) em coordenadas prontas em pixels. | [src/LabelSharpDesignerCore.Layout](src/LabelSharpDesignerCore.Layout/README.md) |
+| `LabelSharpDesignerCore.Serialization` | Salva e carrega arquivos `.label` (JSON versionado). | [src/LabelSharpDesignerCore.Serialization](src/LabelSharpDesignerCore.Serialization/README.md) |
+| `LabelSharpDesignerCore.Barcode` | Gera o desenho (raster) de códigos de barras. | [src/LabelSharpDesignerCore.Barcode](src/LabelSharpDesignerCore.Barcode/README.md) |
+| `LabelSharpDesignerCore.History` | Undo/redo do editor. | [src/LabelSharpDesignerCore.History](src/LabelSharpDesignerCore.History/README.md) |
+| `LabelSharpDesignerCore.Rendering.Abstractions` | Contrato comum usado pelos "desenhadores" (renderers). | [src/LabelSharpDesignerCore.Rendering.Abstractions](src/LabelSharpDesignerCore.Rendering.Abstractions/README.md) |
+| `LabelSharpDesignerCore.Rendering.Canvas` | O "desenhador" principal (SkiaSharp) — usado no preview, no PNG e na impressão raster. | [src/LabelSharpDesignerCore.Rendering.Canvas](src/LabelSharpDesignerCore.Rendering.Canvas/README.md) |
+| `LabelSharpDesignerCore.Rendering.Png` | Exporta a etiqueta como imagem PNG. | [src/LabelSharpDesignerCore.Rendering.Png](src/LabelSharpDesignerCore.Rendering.Png/README.md) |
+| `LabelSharpDesignerCore.Rendering.Pdf` | Exporta a etiqueta como PDF vetorial. | [src/LabelSharpDesignerCore.Rendering.Pdf](src/LabelSharpDesignerCore.Rendering.Pdf/README.md) |
+| `LabelSharpDesignerCore.Rendering.ArgoxPpla` | Gera os comandos para impressoras térmicas Argox (PPLA). | [src/LabelSharpDesignerCore.Rendering.ArgoxPpla](src/LabelSharpDesignerCore.Rendering.ArgoxPpla/README.md) |
+| `LabelSharpDesignerCore.PrintTransport.Windows` | Manda os bytes (PDF ou PPLA) para a impressora de verdade. | [src/LabelSharpDesignerCore.PrintTransport.Windows](src/LabelSharpDesignerCore.PrintTransport.Windows/README.md) |
+| `LabelSharpDesignerCore.UI.WinForms` | Os controles visuais reutilizáveis do editor (a área de desenho, painéis). | [src/LabelSharpDesignerCore.UI.WinForms](src/LabelSharpDesignerCore.UI.WinForms/README.md) |
+| `LabelSharpDesignerCore.App` | O aplicativo final: telas prontas de biblioteca, editor, exportação e impressão. | [src/LabelSharpDesignerCore.App](src/LabelSharpDesignerCore.App/README.md) |
+| `LabelSharpDesignerCore.Legacy.Bridge` | Ponte para sistemas antigos (.NET Framework 4.x) abrirem o editor como programa separado. | [src/LabelSharpDesignerCore.Legacy.Bridge](src/LabelSharpDesignerCore.Legacy.Bridge/README.md) |
+| `LabelSharpDesignerCore.SampleApp` | Aplicativo de exemplo mostrando como integrar tudo isso num sistema próprio. | [src/LabelSharpDesignerCore.SampleApp](src/LabelSharpDesignerCore.SampleApp/README.md) |
 
 ## Testes
 
 Cada projeto de lógica em `src/` tem um projeto de testes correspondente em `tests/`
-(ex.: `LabelSharpDesigner.Core.Tests` testa `LabelSharpDesigner.Core`). Para rodar tudo:
+(ex.: `LabelSharpDesignerCore.Core.Tests` testa `LabelSharpDesignerCore.Core`). Para rodar tudo:
 
 ```powershell
-dotnet test LabelSharpDesigner.slnx
+dotnet test LabelSharpDesignerCore.slnx
 ```
 
 ## Requisitos

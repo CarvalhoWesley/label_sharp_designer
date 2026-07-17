@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\LabelSharpDesignerCore.Core\LabelSharpDesignerCore.Core.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Layout\LabelSharpDesignerCore.Layout.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Expressions\LabelSharpDesignerCore.Expressions.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.History\LabelSharpDesignerCore.History.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.Canvas\LabelSharpDesignerCore.Rendering.Canvas.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="4.150.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+</Project>

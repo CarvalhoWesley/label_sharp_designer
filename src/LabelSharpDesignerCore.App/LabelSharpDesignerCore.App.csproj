@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\LabelSharpDesignerCore.Core\LabelSharpDesignerCore.Core.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Serialization\LabelSharpDesignerCore.Serialization.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Layout\LabelSharpDesignerCore.Layout.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Expressions\LabelSharpDesignerCore.Expressions.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Barcode\LabelSharpDesignerCore.Barcode.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.History\LabelSharpDesignerCore.History.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.Png\LabelSharpDesignerCore.Rendering.Png.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.Pdf\LabelSharpDesignerCore.Rendering.Pdf.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.ArgoxPpla\LabelSharpDesignerCore.Rendering.ArgoxPpla.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.PrintTransport.Windows\LabelSharpDesignerCore.PrintTransport.Windows.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.UI.WinForms\LabelSharpDesignerCore.UI.WinForms.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Legacy.Bridge\LabelSharpDesignerCore.Legacy.Bridge.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon />
+    <!-- Application.SetColorMode/SystemColorMode (dark-mode theming) is still experimental on .NET 9. -->
+    <NoWarn>$(NoWarn);WFO5001</NoWarn>
+  </PropertyGroup>
+
+</Project>

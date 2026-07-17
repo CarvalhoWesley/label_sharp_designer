@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <!-- Domain/rendering libs multi-target netstandard2.0;net9.0 — MSBuild picks the netstandard2.0
+         leg automatically for this net48 consumer, the same libs a real .NET Framework 4.x host
+         would reference (see INTEGRATION.md, "Caminho B"). -->
+    <ProjectReference Include="..\LabelSharpDesignerCore.Core\LabelSharpDesignerCore.Core.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Serialization\LabelSharpDesignerCore.Serialization.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Layout\LabelSharpDesignerCore.Layout.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.Canvas\LabelSharpDesignerCore.Rendering.Canvas.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.Pdf\LabelSharpDesignerCore.Rendering.Pdf.csproj" />
+    <ProjectReference Include="..\LabelSharpDesignerCore.Rendering.ArgoxPpla\LabelSharpDesignerCore.Rendering.ArgoxPpla.csproj" />
+    <!-- Deliberately NOT referencing LabelSharpDesignerCore.App (LibraryForm/LibraryRepository) — this app
+         manages its own label catalog and only invokes the plugin's editor, via Legacy.Bridge, exactly
+         like a real .NET Framework 4.x host would (it couldn't reference App at all: App is
+         net9.0-windows-only, a different, incompatible runtime). PrintTransport.Windows and
+         UI.WinForms are net9.0-windows-only too, for the same reason — see Printing/ for the
+         net48-native reimplementation of the printer-transport pieces this app still needs. -->
+    <ProjectReference Include="..\LabelSharpDesignerCore.Legacy.Bridge\LabelSharpDesignerCore.Legacy.Bridge.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    <PackageReference Include="SkiaSharp" Version="4.150.0" />
+    <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="4.150.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon />
+    <!-- Same policy exemption Directory.Build.props grants LabelSharpDesignerCore.App/SampleApp: a WinForms
+         host app, not a domain/logic library. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

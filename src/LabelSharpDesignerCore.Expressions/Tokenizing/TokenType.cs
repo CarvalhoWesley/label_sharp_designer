@@ -1,0 +1,32 @@
+namespace LabelSharpDesignerCore.Expressions.Tokenizing;
+
+public enum TokenType
+{
+    Identifier,
+    Number,
+    String,
+    True,
+    False,
+    Null,
+    Dot,
+    Comma,
+    LParen,
+    RParen,
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Percent,
+    EqualEqual,
+    NotEqual,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
+    AndAnd,
+    OrOr,
+    Bang,
+    Question,
+    Colon,
+    EndOfInput,
+}
